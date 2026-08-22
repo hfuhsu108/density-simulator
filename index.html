@@ -10,6 +10,10 @@
 <style>
 /* ═══ 1. CSS 變數（對照 ../_shared/design/DESIGN_SPEC.md 第 2 節） ═══ */
 :root{
+  /* UI 等比放大係數（DEV_SPEC 5.4）：由 JS 的 uiScale() 依「裝置實體像素」設定，不是斷點。
+     只有字級乘 --u；元件尺寸（按鈕 44、圖示鈕 34、把手 22…）維持固定 px，兩者都放大會讓版面跑掉。
+     固定尺寸容器內的圖示字級（.logo/.icon-btn/.ds-btn/核取勾）也不乘，否則會撐破容器。 */
+  --u:1;
   --c-primary:#2A6FDB;
   --c-primary-dark:#1E57B0;
   --c-primary-soft:#E8F0FD;
@@ -44,7 +48,7 @@ sup{top:-.55em}
 sub{bottom:-.22em}
 .num-val{font-variant-numeric:tabular-nums}
 /* 區塊標題統一在此定義：只寫 .panel h2 會漏掉右欄，讓它吃到瀏覽器預設的 1.5em */
-h2{font-size:13px;font-weight:700;margin:0}
+h2{font-size:calc(13px * var(--u));font-weight:700;margin:0}
 button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:pointer}
 input,select{font-family:inherit}
 /* 模式切換與條件顯示統一用 hidden 屬性，優先序要壓過各元件的 display */
@@ -53,6 +57,12 @@ input,select{font-family:inherit}
 .app{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 button,.chip,input[type="range"],label.check,label.switch{touch-action:manipulation}
 canvas{touch-action:none;display:block}
+/* 上面 .app 關掉了 iOS 的系統點擊閃現，就必須自己補回按下回饋，
+   否則觸控時按任何鈕都沒有立即反應（顯示/隱藏切換這類本來就看不出變化的操作最嚴重）。
+   禁用態不給回饋——按不動的東西不該回應。 */
+button:not(:disabled):active,.chip:active,label.check:active,label.switch:active{
+  transform:scale(.96);filter:brightness(.94)
+}
 
 /* ═══ 3. 版面：Header / 三欄 / 抽屜 / 導覽列（../_shared/design/layout.html） ═══ */
 .app{
@@ -62,7 +72,7 @@ canvas{touch-action:none;display:block}
 }
 .topbar{height:50px;flex:none;display:flex;align-items:center;gap:12px;padding:0 18px;background:var(--c-surface);border-bottom:1px solid var(--c-bd)}
 .logo{width:28px;height:28px;border-radius:7px;background:var(--c-primary);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex:none}
-.title{font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.title{font-size:calc(17px * var(--u));font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .topbar .actions{margin-left:auto;display:flex;gap:8px}
 .icon-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--c-bd-ctl);background:var(--c-surface);display:flex;align-items:center;justify-content:center;color:var(--c-text-2);font-size:14px}
 
@@ -80,7 +90,7 @@ main{flex:1;position:relative;display:grid;grid-template-columns:1fr 2fr 1fr;gap
 .chartwrap{position:relative;flex:1;min-height:0}
 .chartwrap canvas{position:absolute;inset:0;width:100%;height:100%}
 /* 資料點提示：canvas 畫圖、DOM 顯示提示，文字才不會被 DPR 影響 */
-.tip{position:absolute;pointer-events:none;transform:translate(-50%,-128%);background:var(--c-surface);border:1px solid var(--c-primary-soft-bd);border-radius:8px;padding:5px 9px;font-size:12px;font-variant-numeric:tabular-nums;box-shadow:0 4px 12px rgba(28,36,51,.14);white-space:nowrap}
+.tip{position:absolute;pointer-events:none;transform:translate(-50%,-128%);background:var(--c-surface);border:1px solid var(--c-primary-soft-bd);border-radius:8px;padding:5px 9px;font-size:calc(12px * var(--u));font-variant-numeric:tabular-nums;box-shadow:0 4px 12px rgba(28,36,51,.14);white-space:nowrap}
 .tip .nm{font-weight:700}
 
 /* 右欄：圖上的數據組 */
@@ -88,46 +98,48 @@ main{flex:1;position:relative;display:grid;grid-template-columns:1fr 2fr 1fr;gap
 /* 右欄在 iPad 橫向只有 243px：標題與「清空」都要 nowrap，否則會斷成兩行 */
 .ds-head{display:flex;align-items:center;justify-content:space-between;gap:6px;flex:none}
 .ds-head h2{white-space:nowrap}
-.ds-count{color:var(--c-text-3);font-weight:400}
+.ds-count{color:var(--c-text-2);font-weight:400}
 .ds-count.full{color:var(--c-warn);font-weight:700}
 .ds-list{flex:1;overflow-y:auto;min-height:0}
 .ds-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--c-bd-soft)}
 .ds-row.off{opacity:.42}
-.ds-dot{width:11px;height:11px;border-radius:50%;flex:none}
-.ds-name{flex:1;font-size:12.5px;font-weight:700;line-height:1.3;min-width:0;overflow-wrap:anywhere}
+.ds-dot{width:calc(18px * var(--u));height:calc(18px * var(--u));border-radius:50%;flex:none;
+  display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;
+  font-size:calc(11px * var(--u));line-height:1}
+.ds-name{flex:1;font-size:calc(12.5px * var(--u));font-weight:700;line-height:1.3;min-width:0;overflow-wrap:anywhere}
 .ds-btn{width:36px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--c-text-3);font-size:13px;flex:none}
-.ds-empty{font-size:12.5px;color:var(--c-text-3);padding:8px 2px;line-height:1.5}
+.ds-empty{font-size:calc(12.5px * var(--u));color:var(--c-text-2);padding:8px 2px;line-height:1.5}
 
 .drawer{flex:none;margin:12px 14px;background:var(--c-surface);border:1px solid var(--c-bd);border-radius:12px;padding:8px 18px 10px;box-shadow:0 -4px 12px rgba(28,36,51,.05)}
 .drawer .handle{width:44px;height:5px;border-radius:3px;background:#D7DBE2;margin:0 auto 8px}
 .drawer .row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .btns{display:flex;gap:8px;flex:none}
-.drawer .hint{font-size:12.5px;color:var(--c-text-3)}
+.drawer .hint{font-size:calc(12.5px * var(--u));color:var(--c-text-2)}
 .mobile-tabs{display:none;gap:8px;flex:none;margin-left:auto}
 
 .bottomnav{height:56px;flex:none;display:flex;align-items:center;padding:0 18px;background:var(--c-nav);gap:6px}
-.navtab{white-space:nowrap;flex:none;height:38px;padding:0 18px;border-radius:8px;color:var(--c-nav-idle);font-size:13.5px;display:flex;align-items:center}
+.navtab{white-space:nowrap;flex:none;height:38px;padding:0 18px;border-radius:8px;color:var(--c-nav-idle);font-size:calc(13.5px * var(--u));display:flex;align-items:center}
 .navtab[aria-selected="true"]{background:var(--c-primary);color:#fff;font-weight:700}
-.nav-note{margin-left:auto;font-size:12px;color:var(--c-nav-idle)}
+.nav-note{margin-left:auto;font-size:calc(12px * var(--u));color:var(--c-nav-idle)}
 
 /* ═══ 4. 元件（../_shared/design/components-spec.html） ═══ */
 .field{display:flex;flex-direction:column;gap:6px}
-.field .name{font-size:13px;font-weight:700;color:var(--c-text-2)}
+.field .name{font-size:calc(13px * var(--u));font-weight:700;color:var(--c-text-2)}
 
 /* 輸入類一律 ≥16px，否則 iOS Safari 聚焦會放大整頁 */
-.inp{height:44px;border-radius:10px;border:1px solid var(--c-bd-ctl);background:var(--c-surface);padding:0 10px;font-size:16px;color:var(--c-text);width:100%}
+.inp{height:44px;border-radius:10px;border:1px solid var(--c-bd-ctl);background:var(--c-surface);padding:0 10px;font-size:calc(16px * var(--u));color:var(--c-text);width:100%}
 .inp:focus{border-color:var(--c-primary);outline:none;box-shadow:0 0 0 3px rgba(42,111,219,.15)}
 .inp.num{font-variant-numeric:tabular-nums;border-radius:8px;padding:0 8px}
 
-.btn{height:44px;padding:0 18px;border-radius:10px;background:var(--c-surface);border:1px solid var(--c-bd-ctl);color:var(--c-text-2);font-size:14px;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.btn{height:44px;padding:0 18px;border-radius:10px;background:var(--c-surface);border:1px solid var(--c-bd-ctl);color:var(--c-text-2);font-size:calc(14px * var(--u));display:flex;align-items:center;gap:8px;white-space:nowrap}
 .btn.primary{background:var(--c-primary);border-color:var(--c-primary);color:#fff;font-weight:700}
 .btn:disabled{cursor:default;background:var(--c-bg);border-color:var(--c-bd);color:var(--c-disabled)}
 .btn.primary:disabled{background:var(--c-disabled);border-color:var(--c-disabled);color:#fff}
-.btn-dash{height:40px;border-radius:8px;border:1px dashed var(--c-bd-ctl);color:var(--c-text-2);font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;width:100%}
+.btn-dash{height:40px;border-radius:8px;border:1px dashed var(--c-bd-ctl);color:var(--c-text-2);font-size:calc(13px * var(--u));display:flex;align-items:center;justify-content:center;gap:6px;width:100%}
 .btn-dash:disabled{cursor:default;color:var(--c-disabled);border-color:var(--c-bd)}
-.link-btn{font-size:12px;color:var(--c-text-3);height:32px;padding:0 6px;white-space:nowrap;flex:none}
+.link-btn{font-size:calc(12px * var(--u));color:var(--c-text-2);height:32px;padding:0 6px;white-space:nowrap;flex:none}
 
-.chip{white-space:nowrap;height:40px;padding:0 14px;border-radius:8px;background:var(--c-surface);border:1px solid var(--c-bd-ctl);color:var(--c-text-2);font-size:13px;display:flex;align-items:center;gap:6px}
+.chip{white-space:nowrap;height:40px;padding:0 14px;border-radius:8px;background:var(--c-surface);border:1px solid var(--c-bd-ctl);color:var(--c-text-2);font-size:calc(13px * var(--u));display:flex;align-items:center;gap:6px}
 .chip[aria-pressed="true"]{background:var(--c-primary);border-color:var(--c-primary);color:#fff;font-weight:700}
 
 /* DESIGN_SPEC 給的視覺尺寸（icon 鈕 34px、分頁 38px）小於鐵律 6 的 44px：
@@ -138,10 +150,10 @@ main{flex:1;position:relative;display:grid;grid-template-columns:1fr 2fr 1fr;gap
   width:max(100%,44px);height:max(100%,44px);
 }
 
-.sliderbox .head{display:flex;justify-content:space-between;font-size:13px;margin-bottom:2px}
+.sliderbox .head{display:flex;justify-content:space-between;font-size:calc(13px * var(--u));margin-bottom:2px}
 .sliderbox .head .name{color:var(--c-text-2);font-weight:700}
 .sliderbox .head .val{font-weight:700;font-variant-numeric:tabular-nums}
-.sliderbox .minmax{display:flex;justify-content:space-between;font-size:11.5px;color:var(--c-text-3)}
+.sliderbox .minmax{display:flex;justify-content:space-between;font-size:calc(11.5px * var(--u));color:var(--c-text-2)}
 /* 滑桿：軌 6px、把手 22px、感應高度 44px（透明區） */
 input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:44px;margin:0;background:transparent}
 input[type="range"]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:linear-gradient(to right,var(--c-primary) var(--fill,50%),#D3D9E1 var(--fill,50%))}
@@ -150,32 +162,34 @@ input[type="range"]::-moz-range-track{height:6px;border-radius:3px;background:#D
 input[type="range"]::-moz-range-progress{height:6px;border-radius:3px;background:var(--c-primary)}
 input[type="range"]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--c-primary);box-shadow:0 1px 3px rgba(0,0,0,.2)}
 
-label.check{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--c-text-2);min-height:44px;line-height:1.3}
+label.check{display:flex;align-items:center;gap:8px;font-size:calc(13px * var(--u));color:var(--c-text-2);min-height:44px;line-height:1.3}
 label.check input{position:absolute;opacity:0;width:0;height:0}
 label.check .box{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--c-bd-ctl);background:var(--c-surface);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;flex:none}
 label.check input:checked+.box{background:var(--c-primary);border-color:var(--c-primary)}
 label.check .box i{visibility:hidden}
 label.check input:checked+.box i{visibility:visible}
 
-label.switch{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--c-text-2);min-height:44px;line-height:1.3}
+label.switch{display:flex;align-items:center;gap:10px;font-size:calc(13px * var(--u));color:var(--c-text-2);min-height:44px;line-height:1.3}
 label.switch input{position:absolute;opacity:0;width:0;height:0}
 label.switch .track{width:52px;height:30px;border-radius:15px;background:var(--c-bd-ctl);position:relative;flex:none;transition:background .15s}
 label.switch .track::after{content:"";position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .15s}
 label.switch input:checked+.track{background:var(--c-primary)}
 label.switch input:checked+.track::after{left:25px}
-label.switch .sub{font-size:11.5px;color:var(--c-text-3);display:block}
+label.switch .sub{font-size:calc(11.5px * var(--u));color:var(--c-text-2);display:block}
 
 /* 實驗數據表格 */
 .exp-table{display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:center}
-.exp-table .th{font-size:12.5px;color:var(--c-text-3);font-weight:700}
-.note{font-size:12px;color:var(--c-text-3);margin:0;line-height:1.5}
+.exp-table .th{font-size:calc(12.5px * var(--u));color:var(--c-text-2);font-weight:700}
+/* 邊界情境的說明文字：不可用 disabled 色（DESIGN_SPEC 第 2 節，#CFD5DD 對比只有 1.38:1） */
+.status{font-size:calc(12.5px * var(--u));color:var(--c-warn);font-weight:700;line-height:1.35;flex:1;min-width:140px}
+.note{font-size:calc(12px * var(--u));color:var(--c-text-2);margin:0;line-height:1.5}
 
 /* 說明彈窗 */
 .modal{position:fixed;inset:0;background:rgba(28,36,51,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
 .modal.open{display:flex}
 .modal .box{background:var(--c-surface);border-radius:14px;padding:22px 24px;max-width:540px;max-height:82%;overflow-y:auto;user-select:text;-webkit-user-select:text}
-.modal h3{font-size:17px;margin:0 0 10px}
-.modal p{font-size:13.5px;color:var(--c-text-2);margin:0 0 10px;line-height:1.6}
+.modal h3{font-size:calc(17px * var(--u));margin:0 0 10px}
+.modal p{font-size:calc(13.5px * var(--u));color:var(--c-text-2);margin:0 0 10px;line-height:1.6}
 
 /* hover 一律包在 (hover:hover)，iPad 點擊才不會殘留 hover 狀態 */
 @media (hover:hover){
@@ -225,8 +239,8 @@ label.switch .sub{font-size:11.5px;color:var(--c-text-3);display:block}
       </div>
 
       <div class="sliderbox" id="boxRho" hidden>
-        <div class="head"><span class="name">自訂密度 D</span><span class="val"><span id="rhoVal">1.05</span> g/cm³</span></div>
-        <input type="range" id="rhoSlider" min="0.6" max="1.4" step="0.01" value="1.05" aria-label="自訂密度">
+        <div class="head"><span class="name">自訂密度 D</span><span class="val"><span id="rhoVal">1.00</span> g/cm³</span></div>
+        <input type="range" id="rhoSlider" min="0.6" max="1.4" step="0.2" value="1" aria-label="自訂密度">
         <div class="minmax"><span>0.60</span><span>1.40</span></div>
       </div>
 
@@ -236,7 +250,7 @@ label.switch .sub{font-size:11.5px;color:var(--c-text-3);display:block}
       </div>
 
       <div class="sliderbox" id="boxCyl" hidden>
-        <div class="head"><span class="name">量筒質量 M</span><span class="val"><span id="cylVal">30</span> g</span></div>
+        <div class="head"><span class="name">量筒質量 M<sub>量筒</sub></span><span class="val"><span id="cylVal">30</span> g</span></div>
         <input type="range" id="cylSlider" min="0" max="80" step="1" value="30" aria-label="量筒質量">
         <div class="minmax"><span>0</span><span>80</span></div>
       </div>
@@ -303,13 +317,15 @@ label.switch .sub{font-size:11.5px;color:var(--c-text-3);display:block}
     <div class="row">
       <div class="btns" id="simBtns">
         <button class="btn primary" id="btnAdd"><i class="fa-solid fa-droplet"></i>加 <span class="num-val" id="stepText">10</span> mL</button>
-        <button class="btn" id="btnEmpty"><i class="fa-solid fa-arrow-rotate-left"></i>倒空量筒</button>
+        <button class="btn" id="btnEmpty"><i class="fa-solid fa-droplet-slash"></i>倒空量筒</button>
       </div>
       <div class="btns" id="expBtns" hidden>
         <button class="btn primary" id="btnExpAdd"><i class="fa-solid fa-chart-line"></i>加入圖表</button>
         <button class="btn" id="btnExpClear">清空表格</button>
       </div>
+      <button class="btn" id="btnReset"><i class="fa-solid fa-rotate-left"></i>全部重置</button>
       <span class="hint" id="expHint" hidden>在左欄填入實際量到的體積與質量，可自訂體積值。</span>
+      <span class="status" id="status" hidden></span>
       <div class="mobile-tabs">
         <button class="chip" id="tabSettings" aria-pressed="false"><i class="fa-solid fa-gear"></i>設定</button>
         <button class="chip" id="tabData" aria-pressed="false"><i class="fa-solid fa-chart-simple"></i>數據</button>
@@ -357,13 +373,31 @@ const CYLS = [
   { id:'b', name:'量筒乙', m:68 },
   { id:'custom', name:'自訂量筒', m:null }
 ];
-// 圖表序列色（DESIGN_SPEC 第 3 節：藍→綠→橘→紫→青），數量即為資料組上限
-const SERIES = ['#2A6FDB', '#2F9E63', '#E8871E', '#8B5CF6', '#0F8A8A'];
+// 圖表序列色（DESIGN_SPEC 第 3 節：藍→綠→橘→紫→青），數量即為資料組上限。
+// 橘原為 #E8871E，白底實測 2.65:1 未達 3:1 門檻，加深為 #C2660C（4.04:1）
+const SERIES = ['#2A6FDB', '#2F9E63', '#C2660C', '#8B5CF6', '#0F8A8A'];
+// 顏色不得是唯一的區辨方式（DESIGN_SPEC 第 3 節）：投影會把序列色洗掉，
+// 每組另給一個代號，圖上的線與右欄清單標同一個字
+const LABELS = ['A', 'B', 'C', 'D', 'E'];
+// 顯示位數集中在這裡，禁止各處硬編 toFixed(n)（DESIGN_SPEC 第 4 節）
+const DEC = { rho:2, mass:1, vol:0 };
+// UI 等比放大係數（DEV_SPEC 5.4）。宣告在此是為了避免繪圖函式在初始化前被呼叫到 TDZ；
+// 真正的值在第 7 節由 uiScale() 依裝置實體像素算出
+let U = 1;
 const C = {
   bench:'#FDFAF3', benchEdge:'#F0EDE4', metal:'#8A94A3', metalLt:'#B4BCC7', line:'#5F6B7E',
   glass:'rgba(197,221,232,.55)', beaker:'rgba(197,221,232,.5)', surface:'rgba(42,111,219,.45)',
-  lcd:'#1C2433', ok:'#2F9E63', grid:'#EEF1F5', axis:'#CFD5DD', tick:'#7A8496', axisLabel:'#445062', empty:'#9AA3B2'
+  // 刻度數字 #7A8496 實測 3.77:1（未達文字門檻 4.5）、軸線 #CFD5DD 只有 1.48:1、
+  // 空狀態提示 #9AA3B2 只有 2.54:1 —— 三者都承載資訊，一律加深（DESIGN_SPEC 第 2 節）
+  lcd:'#1C2433', ok:'#2F9E63', grid:'#EEF1F5', axis:'#7A8496', tick:'#445062', axisLabel:'#445062', empty:'#445062',
+  out:'#D64545'   // 出界標記
 };
+// 座標軸固定範圍（DESIGN_SPEC 第 7 節：軸一律固定，不隨資料縮放）。
+// 軸會動的話，加入第二組液體時第一條線的視覺陡度就變了，「密度愈大線愈陡」在畫面上驗證不了。
+// 上限由模擬模式的極值反推：V 50 mL、密度上限 1.4、量筒上限 80 g → M 最大 150 g。
+// 刻度節奏 = 取樣節奏：每次注水 10 mL，X 軸就每 10 mL 一格。
+const AXIS_V_MAX = 60, AXIS_V_STEP = 10;
+const AXIS_M_MAX = 160, AXIS_M_STEP = 20;
 const MAX_V = 50;        // 量筒刻度上限（mL）
 const POUR_STEP = 10;    // 每次注水量（mL）
 const CAP = MAX_V + 10;  // 量筒實際容量：頂端留白，水位才不會貼齊筒口
@@ -375,7 +409,7 @@ const MAX_ROWS = 8;
 function initState(){
   return {
     screen:0,                 // 0 模擬模式、1 實驗模式
-    liquidId:'water', customRho:1.05,
+    liquidId:'water', customRho:1.0,
     cylId:'a', customCyl:30,
     tare:false,
     v:0,                      // 目前水位（mL），動畫每幀逼近 targetV
@@ -397,11 +431,17 @@ function liquid(){ return LIQUIDS.find(l => l.id === state.liquidId) || LIQUIDS[
 function rho(){ const l = liquid(); return l.rho === null ? state.customRho : l.rho; }
 function cylDef(){ return CYLS.find(c => c.id === state.cylId) || CYLS[0]; }
 function cylMass(){ const c = cylDef(); return c.m === null ? state.customCyl : c.m; }
-function liqName(){ const l = liquid(); return l.rho === null ? '自訂 D ' + rho().toFixed(2) : l.name; }
+function liqName(){ const l = liquid(); return l.rho === null ? '自訂 D ' + rho().toFixed(DEC.rho) : l.name; }
 // 同一組「液體＋密度＋去皮與否＋量筒質量」的注水視為同一條線，續用不新增
+// 這裡的 toFixed(2) 是 key 的正規化，不是顯示位數，所以刻意不走 DEC
 function runKey(){ return [state.liquidId, rho().toFixed(2), state.tare ? 'n' : 'y', cylMass()].join('|'); }
 function runName(){ return liqName() + (state.tare ? '・未含量筒' : '・含量筒 ' + cylMass() + ' g'); }
-function nextColor(){ return SERIES.find(c => !state.datasets.some(d => d.color === c)) || SERIES[0]; }
+// 顏色與代號同一個槽位——右欄的「A」與圖上的「A」必須永遠是同一組
+function nextSlot(){
+  const i = SERIES.findIndex((c, k) => !state.datasets.some(d => d.slot === k));
+  const k = i < 0 ? 0 : i;
+  return { slot:k, color:SERIES[k], label:LABELS[k] };
+}
 // 天秤讀數：M = D × V ＋ 量筒質量（去皮則不含量筒）
 function massAt(v){ return rho() * v + (state.tare ? 0 : cylMass()); }
 
@@ -457,16 +497,17 @@ function rr(ctx, x, y, w, h, r){
 }
 
 function calcGeo(W, H){
-  const balW = Math.min(250, W * 0.62), balH = 42;
-  const cx = W * 0.42, baseY = H - 14;
-  const balTop = baseY - balH, platTop = balTop - 9;
-  const cylW = Math.max(52, Math.min(78, W * 0.2));
+  // 器材的尺寸一律乘 U：canvas 內是字面量，media query 管不到（DEV_SPEC 5.4 第 3 條）
+  const balW = Math.min(250 * U, W * 0.62), balH = 42 * U;
+  const cx = W * 0.42, baseY = H - 14 * U;
+  const balTop = baseY - balH, platTop = balTop - 9 * U;
+  const cylW = Math.max(52 * U, Math.min(78 * U, W * 0.2));
   // 上方要留位置給量杯與水流，否則高度不夠時量筒頂端會被切掉
-  const cylH = Math.max(66, Math.min(H - 14 - balH - 9 - 62, 200));
+  const cylH = Math.max(66 * U, Math.min(H - 14 * U - balH - 9 * U - 62 * U, 200 * U));
   const cylBot = platTop, cylTop = cylBot - cylH;
   return { W, H, cx, baseY, balX: cx - balW / 2, balW, balH, balTop, platTop,
            cylX: cx - cylW / 2, cylW, cylTop, cylBot,
-           innerBot: cylBot - 7, innerTop: cylTop + 15 };
+           innerBot: cylBot - 7 * U, innerTop: cylTop + 15 * U };
 }
 function yForV(v){ return geo.innerBot - (v / CAP) * (geo.innerBot - geo.innerTop); }
 
@@ -477,43 +518,43 @@ function drawApBg(){
   ctx.fillStyle = C.bench; ctx.fillRect(0, 0, g.W, g.H);
   ctx.fillStyle = C.benchEdge; ctx.fillRect(0, g.baseY, g.W, g.H - g.baseY);
 
-  rr(ctx, g.balX, g.balTop, g.balW, g.balH, 6);
+  rr(ctx, g.balX, g.balTop, g.balW, g.balH, 6 * U);
   ctx.fillStyle = C.metal; ctx.fill();
-  ctx.strokeStyle = C.line; ctx.lineWidth = 2; ctx.stroke();
-  rr(ctx, g.cx - g.balW * 0.34, g.platTop, g.balW * 0.68, 10, 3);
+  ctx.strokeStyle = C.line; ctx.lineWidth = 2 * U; ctx.stroke();
+  rr(ctx, g.cx - g.balW * 0.34, g.platTop, g.balW * 0.68, 10 * U, 3 * U);
   ctx.fillStyle = C.metalLt; ctx.fill(); ctx.strokeStyle = C.line; ctx.stroke();
 
   ctx.save();
   ctx.fillStyle = C.glass;
-  rr(ctx, g.cylX, g.cylTop, g.cylW, g.cylBot - g.cylTop, 7); ctx.fill();
-  ctx.strokeStyle = C.line; ctx.lineWidth = 3; ctx.stroke();
+  rr(ctx, g.cylX, g.cylTop, g.cylW, g.cylBot - g.cylTop, 7 * U); ctx.fill();
+  ctx.strokeStyle = C.line; ctx.lineWidth = 3 * U; ctx.stroke();
   ctx.restore();
 
-  ctx.strokeStyle = C.line; ctx.lineWidth = 2;
-  ctx.font = '11px ' + FONT_STACK; ctx.fillStyle = C.line;
+  ctx.strokeStyle = C.line; ctx.lineWidth = 2 * U;
+  ctx.font = (11 * U) + 'px ' + FONT_STACK; ctx.fillStyle = C.line;
   ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
   // 量筒矮的時候只標偶數刻度，避免數字疊在一起
-  const labelEvery = (g.innerBot - g.innerTop) / (CAP / 10) < 15 ? 20 : 10;
+  const labelEvery = (g.innerBot - g.innerTop) / (CAP / 10) < 15 * U ? 20 : 10;
   for (let v = 10; v <= CAP; v += 10){
     const y = yForV(v);
-    if (y < g.cylTop + 6) break;
+    if (y < g.cylTop + 6 * U) break;
     ctx.beginPath();
-    ctx.moveTo(g.cylX + 3, y);
-    ctx.lineTo(g.cylX + (v % labelEvery === 0 ? 16 : 10), y);
+    ctx.moveTo(g.cylX + 3 * U, y);
+    ctx.lineTo(g.cylX + (v % labelEvery === 0 ? 16 * U : 10 * U), y);
     ctx.stroke();
-    if (v % labelEvery === 0) ctx.fillText(String(v), g.cylX + g.cylW - 6, y);
+    if (v % labelEvery === 0) ctx.fillText(String(v), g.cylX + g.cylW - 6 * U, y);
   }
-  if (g.cylTop > 16){
+  if (g.cylTop > 16 * U){
     ctx.textAlign = 'center';
-    ctx.font = '700 11px ' + FONT_STACK;
-    ctx.fillText('mL', g.cylX + g.cylW / 2, g.cylTop - 9);
+    ctx.font = '700 ' + (11 * U) + 'px ' + FONT_STACK;
+    ctx.fillText('mL', g.cylX + g.cylW / 2, g.cylTop - 9 * U);
   }
   // 上方量杯：空間不足就不畫，水流改成從畫面上緣落下
-  const bw = 54, bh = 36, bx = g.cx - bw / 2, by = g.cylTop - 58;
-  if (by > 2){
-    rr(ctx, bx, by, bw, bh, 5);
+  const bw = 54 * U, bh = 36 * U, bx = g.cx - bw / 2, by = g.cylTop - 58 * U;
+  if (by > 2 * U){
+    rr(ctx, bx, by, bw, bh, 5 * U);
     ctx.fillStyle = C.beaker; ctx.fill();
-    ctx.strokeStyle = C.line; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.strokeStyle = C.line; ctx.lineWidth = 2.5 * U; ctx.stroke();
     beaker = { x:bx, y:by, w:bw, h:bh };
   } else beaker = null;
 }
@@ -529,43 +570,86 @@ function drawApFg(){
     const grad = ctx.createLinearGradient(0, top, 0, g.innerBot);
     grad.addColorStop(0, L.c1); grad.addColorStop(1, L.c2);
     ctx.save();
-    rr(ctx, g.cylX + 3, top, g.cylW - 6, g.innerBot - top + 2, 5);
+    rr(ctx, g.cylX + 3 * U, top, g.cylW - 6 * U, g.innerBot - top + 2 * U, 5 * U);
     ctx.fillStyle = grad; ctx.fill();
     ctx.fillStyle = C.surface;
-    ctx.fillRect(g.cylX + 3, top - 1, g.cylW - 6, 2);
+    ctx.fillRect(g.cylX + 3 * U, top - 1 * U, g.cylW - 6 * U, 2 * U);
     ctx.restore();
   }
   if (beaker){
     ctx.fillStyle = L.c2;
-    rr(ctx, beaker.x + 3, beaker.y + beaker.h * 0.42, beaker.w - 6, beaker.h * 0.58 - 3, 4);
+    rr(ctx, beaker.x + 3 * U, beaker.y + beaker.h * 0.42, beaker.w - 6 * U, beaker.h * 0.58 - 3 * U, 4 * U);
     ctx.fill();
   }
   if (state.pouring){
     const top = beaker ? beaker.y + beaker.h : 0;
     const bot = v > 0.05 ? yForV(v) : g.innerBot;
     ctx.fillStyle = L.c2;
-    ctx.fillRect(g.cx - 3, top, 6, Math.max(0, bot - top));
-    ctx.beginPath(); ctx.ellipse(g.cx, bot, 11, 3.5, 0, 0, Math.PI * 2);
+    ctx.fillRect(g.cx - 3 * U, top, 6 * U, Math.max(0, bot - top));
+    ctx.beginPath(); ctx.ellipse(g.cx, bot, 11 * U, 3.5 * U, 0, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fill();
   }
   // 天秤顯示器
-  const dw = 104, dh = 26, dx = g.balX + 14, dy = g.balTop + (g.balH - dh) / 2;
-  rr(ctx, dx, dy, dw, dh, 5); ctx.fillStyle = C.lcd; ctx.fill();
-  ctx.font = '700 16px ' + FONT_STACK; ctx.fillStyle = '#fff';
+  const dw = 104 * U, dh = 26 * U, dx = g.balX + 14 * U, dy = g.balTop + (g.balH - dh) / 2;
+  rr(ctx, dx, dy, dw, dh, 5 * U); ctx.fillStyle = C.lcd; ctx.fill();
+  ctx.font = '700 ' + (16 * U) + 'px ' + FONT_STACK; ctx.fillStyle = '#fff';
   ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-  ctx.fillText(massAt(v).toFixed(1) + ' g', dx + dw - 8, dy + dh / 2 + 1);
+  ctx.fillText(massAt(v).toFixed(DEC.mass) + ' g', dx + dw - 8 * U, dy + dh / 2 + 1);
   if (state.tare){
-    ctx.font = '700 9px ' + FONT_STACK; ctx.fillStyle = C.ok; ctx.textAlign = 'left';
-    ctx.fillText('TARE', dx + 7, dy + dh / 2 + 1);
+    ctx.font = '700 ' + (9 * U) + 'px ' + FONT_STACK; ctx.fillStyle = C.ok; ctx.textAlign = 'left';
+    ctx.fillText('TARE', dx + 7 * U, dy + dh / 2 + 1);
   }
-  ctx.beginPath(); ctx.arc(g.balX + g.balW - 16, g.balTop + g.balH / 2, 4, 0, Math.PI * 2);
+  ctx.beginPath(); ctx.arc(g.balX + g.balW - 16 * U, g.balTop + g.balH / 2, 4 * U, 0, Math.PI * 2);
   ctx.fillStyle = C.ok; ctx.fill();
 }
 
-// 座標軸刻度間距候選：挑第一個不小於目標值的，避免出現 37 這種刻度
-function nice(v){
-  for (const c of [1, 2, 5, 10, 20, 25, 50, 100, 200]) if (c >= v) return c;
-  return 500;
+// 出界標記：資料超出固定軸時，在被裁掉的方向畫一個紅色三角。
+// 絕不能讓資料「圖上消失但讀數照報」——那是畫面對學生說謊（DEV_SPEC 第 7 節）
+function drawOutMark(ctx, d, p, X, Y, W, padL, padR, padT){
+  const overV = p.v > AXIS_V_MAX, overM = p.m > AXIS_M_MAX;
+  const r = 6 * U;
+  const x = overV ? W - padR - r : X(p.v);
+  const y = overM ? padT + r : Y(p.m);
+  ctx.save();
+  ctx.beginPath();
+  if (overM){ ctx.moveTo(x, y - r); ctx.lineTo(x - r * 0.8, y + r * 0.6); ctx.lineTo(x + r * 0.8, y + r * 0.6); }
+  else { ctx.moveTo(x + r, y); ctx.lineTo(x - r * 0.6, y - r * 0.8); ctx.lineTo(x - r * 0.6, y + r * 0.8); }
+  ctx.closePath();
+  ctx.fillStyle = C.out; ctx.fill();
+  ctx.strokeStyle = d.color; ctx.lineWidth = 1.5 * U; ctx.stroke();
+  ctx.restore();
+}
+
+// 資料組代號：顏色不得是唯一的區辨方式（DESIGN_SPEC 第 3 節）。
+// 標在擬合線的右端，沒有線就標在最後一個落在圖內的點旁
+function drawSeriesLabel(ctx, d, f, X, Y, padT, padB, H){
+  let pos = null;
+  if (f && state.showFit){
+    for (let v = AXIS_V_MAX; v >= 0; v -= 2){
+      const m = f.a * v + f.b;
+      if (m >= 0 && m <= AXIS_M_MAX){ pos = { x:X(v), y:Y(m) }; break; }
+    }
+  }
+  if (!pos){
+    const inRange = d.points.filter(p => p.v <= AXIS_V_MAX && p.m <= AXIS_M_MAX && p.m >= 0);
+    const last = inRange[inRange.length - 1];
+    if (last) pos = { x:X(last.v), y:Y(last.m) };
+  }
+  if (!pos) return;
+  const r = 9 * U;
+  const cx = pos.x - r - 2 * U;
+  // 貼近上緣時翻到線的下方，免得被裁掉
+  let cy = pos.y - r - 2 * U;
+  if (cy < padT + r) cy = pos.y + r + 2 * U;
+  if (cy > H - padB - r) cy = H - padB - r;
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = d.color; ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5 * U; ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.font = '700 ' + (11 * U) + 'px ' + FONT_STACK;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(d.label, cx, cy);
+  ctx.restore();
 }
 
 function drawChart(){
@@ -574,70 +658,82 @@ function drawChart(){
   ctx.clearRect(0, 0, W, H);
   const vis = state.datasets.filter(d => d.visible);
 
-  let maxV = MAX_V, maxM = 40;
-  for (const d of vis) for (const p of d.points){
-    maxV = Math.max(maxV, p.v); maxM = Math.max(maxM, p.m);
-  }
-  const xMax = Math.ceil((maxV + 10) / 10) * 10;
-  const yStep = nice(maxM * 1.12 / 5);
-  const yMax = Math.max(yStep * 2, Math.ceil(maxM * 1.12 / yStep) * yStep);
-  const padL = 48, padR = 16, padT = 14, padB = 34;
-  const X = v => padL + (v / xMax) * (W - padL - padR);
-  const Y = m => H - padB - (m / yMax) * (H - padT - padB);
+  // 軸範圍是常數，不看資料（DESIGN_SPEC 第 7 節）。
+  // padding 跟著字級放大，否則大屏上刻度數字會擠出繪圖區。
+  const padL = 48 * U, padR = 16 * U, padT = 14 * U, padB = 34 * U;
+  const X = v => padL + (v / AXIS_V_MAX) * (W - padL - padR);
+  const Y = m => H - padB - (m / AXIS_M_MAX) * (H - padT - padB);
 
   if (state.showGrid){
     ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
-    for (let v = 10; v <= xMax; v += 10){
+    for (let v = AXIS_V_STEP; v <= AXIS_V_MAX; v += AXIS_V_STEP){
       ctx.beginPath(); ctx.moveTo(X(v), padT); ctx.lineTo(X(v), H - padB); ctx.stroke();
     }
-    for (let m = yStep; m <= yMax; m += yStep){
+    for (let m = AXIS_M_STEP; m <= AXIS_M_MAX; m += AXIS_M_STEP){
       ctx.beginPath(); ctx.moveTo(padL, Y(m)); ctx.lineTo(W - padR, Y(m)); ctx.stroke();
     }
   }
-  ctx.strokeStyle = C.axis; ctx.lineWidth = 2;
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 2 * U;
   ctx.beginPath(); ctx.moveTo(padL, padT); ctx.lineTo(padL, H - padB); ctx.lineTo(W - padR, H - padB); ctx.stroke();
 
-  ctx.fillStyle = C.tick; ctx.font = '11px ' + FONT_STACK;
+  ctx.fillStyle = C.tick; ctx.font = (11 * U) + 'px ' + FONT_STACK;
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-  for (let v = 0; v <= xMax; v += 10) ctx.fillText(String(v), X(v), H - padB + 7);
+  for (let v = 0; v <= AXIS_V_MAX; v += AXIS_V_STEP) ctx.fillText(String(v), X(v), H - padB + 7 * U);
   ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-  for (let m = 0; m <= yMax; m += yStep) ctx.fillText(String(m), padL - 7, Y(m));
+  for (let m = 0; m <= AXIS_M_MAX; m += AXIS_M_STEP) ctx.fillText(String(m), padL - 7 * U, Y(m));
 
-  ctx.font = '700 12px ' + FONT_STACK; ctx.fillStyle = C.axisLabel;
+  ctx.font = '700 ' + (12 * U) + 'px ' + FONT_STACK; ctx.fillStyle = C.axisLabel;
   ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-  ctx.fillText('體積 V (mL)', (padL + W - padR) / 2, H - 4);
+  ctx.fillText('體積 V (mL)', (padL + W - padR) / 2, H - 4 * U);
   ctx.save();
-  ctx.translate(13, (padT + H - padB) / 2); ctx.rotate(-Math.PI / 2);
+  ctx.translate(13 * U, (padT + H - padB) / 2); ctx.rotate(-Math.PI / 2);
   ctx.textBaseline = 'middle'; ctx.fillText('質量 M (g)', 0, 0);
   ctx.restore();
 
   ptPix = [];
+  let outCount = 0;
   ctx.save();
-  ctx.beginPath(); ctx.rect(padL, padT - 4, W - padL - padR, H - padT - padB + 4); ctx.clip();
+  ctx.beginPath(); ctx.rect(padL, padT - 4 * U, W - padL - padR, H - padT - padB + 4 * U); ctx.clip();
   for (const d of vis){
     const f = fit2(d.points);
     if (f && state.showFit){
-      ctx.strokeStyle = d.color; ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.moveTo(X(0), Y(f.b)); ctx.lineTo(X(xMax), Y(f.a * xMax + f.b)); ctx.stroke();
+      ctx.strokeStyle = d.color; ctx.lineWidth = 2.5 * U;
+      ctx.beginPath();
+      ctx.moveTo(X(0), Y(f.b));
+      ctx.lineTo(X(AXIS_V_MAX), Y(f.a * AXIS_V_MAX + f.b));
+      ctx.stroke();
       // 截距夠大才標：這個空心圓就是「量筒質量」的視覺錨點
-      if (f.b > 0.6){
-        ctx.beginPath(); ctx.arc(X(0), Y(f.b), 5, 0, Math.PI * 2);
+      if (f.b > 0.6 && f.b <= AXIS_M_MAX){
+        ctx.beginPath(); ctx.arc(X(0), Y(f.b), 5 * U, 0, Math.PI * 2);
         ctx.fillStyle = '#fff'; ctx.fill();
-        ctx.strokeStyle = d.color; ctx.lineWidth = 2.5; ctx.stroke();
+        ctx.strokeStyle = d.color; ctx.lineWidth = 2.5 * U; ctx.stroke();
       }
     }
     for (const p of d.points){
+      if (p.v > AXIS_V_MAX || p.m > AXIS_M_MAX || p.m < 0){
+        drawOutMark(ctx, d, p, X, Y, W, padL, padR, padT);
+        outCount++;
+        continue;
+      }
       const px = X(p.v), py = Y(p.m);
-      ctx.beginPath(); ctx.arc(px, py, 4.6, 0, Math.PI * 2);
+      ctx.beginPath(); ctx.arc(px, py, 4.6 * U, 0, Math.PI * 2);
       ctx.fillStyle = d.color; ctx.fill();
-      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.6; ctx.stroke();
-      ptPix.push({ x:px, y:py, v:p.v, m:p.m, name:d.name, color:d.color });
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.6 * U; ctx.stroke();
+      ptPix.push({ x:px, y:py, v:p.v, m:p.m, name:d.name, label:d.label, color:d.color });
     }
+    drawSeriesLabel(ctx, d, f, X, Y, padT, padB, H);
   }
   ctx.restore();
 
+  // 有東西被裁掉就一定要說出來，不能靜默消失
+  if (outCount){
+    ctx.fillStyle = C.out; ctx.font = '700 ' + (11.5 * U) + 'px ' + FONT_STACK;
+    ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+    ctx.fillText('有 ' + outCount + ' 個點超出座標範圍（紅色三角）', W - padR, padT + 3 * U);
+  }
+
   if (!vis.length){
-    ctx.fillStyle = C.empty; ctx.font = '13px ' + FONT_STACK;
+    ctx.fillStyle = C.empty; ctx.font = (13 * U) + 'px ' + FONT_STACK;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(state.screen === 0
       ? '按「加 ' + POUR_STEP + ' mL」開始注水，每一次都會描一個點'
@@ -653,7 +749,7 @@ for (const id of ['selLiquid','selCyl','boxRho','boxCyl','rhoSlider','cylSlider'
                   'chkTare','tareHint','chkFit','chkGrid','panelSim','panelExp','apStage',
                   'simBtns','expBtns','expHint','btnAdd','btnEmpty','stepText','dsCount','dsList',
                   'expName','chkIncl','expTable','btnAddRow','btnExpAdd','btnExpClear','tip',
-                  'btnClearAll','chart','chStage','apBg','apFg'])
+                  'btnClearAll','chart','chStage','apBg','apFg','status','btnReset'])
   el[id] = document.getElementById(id);
 
 // 下拉選項由資料表生成，避免選項與 LIQUIDS/CYLS 不同步
@@ -663,14 +759,14 @@ function buildOptions(){
     const o = document.createElement('option');
     o.value = l.id;
     o.textContent = l.rho === null ? '自訂液體（滑桿調 D）'
-                  : l.name + '　D = ' + (l.unknown ? '？' : l.rho.toFixed(2));
+                  : l.name + '　D = ' + (l.unknown ? '？' : l.rho.toFixed(DEC.rho));
     el.selLiquid.appendChild(o);
   }
   el.selCyl.innerHTML = '';
   for (const c of CYLS){
     const o = document.createElement('option');
     o.value = c.id;
-    o.textContent = c.m === null ? '自訂量筒（滑桿調 M）' : c.name + '　M = ' + c.m + ' g';
+    o.textContent = c.m === null ? '自訂量筒（滑桿調質量）' : c.name + '　質量 ' + c.m + ' g';
     el.selCyl.appendChild(o);
   }
 }
@@ -705,7 +801,7 @@ function emptyCyl(){
 el.selLiquid.addEventListener('change', e => { state.liquidId = e.target.value; emptyCyl(); });
 el.selCyl.addEventListener('change', e => { state.cylId = e.target.value; emptyCyl(); });
 el.rhoSlider.addEventListener('input', e => {
-  state.customRho = +(+e.target.value).toFixed(2); refreshFill(e.target); emptyCyl();
+  state.customRho = +(+e.target.value).toFixed(DEC.rho); refreshFill(e.target); emptyCyl();
 });
 el.cylSlider.addEventListener('input', e => {
   state.customCyl = +e.target.value; refreshFill(e.target); emptyCyl();
@@ -721,14 +817,17 @@ el.chkTare.addEventListener('change', e => {
     const exist = state.datasets.find(d => d.key === nkey);
     if (exist){ exist.points = conv; exist.visible = true; }
     else if (state.datasets.length >= MAX_SETS){
-      // 放不下對照組：維持原狀並讓開關回彈，不要靜默地只改讀數
+      // 放不下對照組：維持原狀並讓開關回彈。回彈一定要配訊息，
+      // 否則學生只看到開關自己跳回去，會以為是壞了
       e.target.checked = state.tare;
+      flashStatus('圖上已有 ' + MAX_SETS + ' 組，放不下「去皮後」的對照組。請先在右欄刪掉一組。');
       return;
     } else {
+      const slot = nextSlot();
       state.datasets.push({
         id:++uid, key:nkey,
         name: liqName() + (next ? '・未含量筒' : '・含量筒 ' + cyl + ' g'),
-        color:nextColor(), visible:true, points:conv
+        slot:slot.slot, color:slot.color, label:slot.label, visible:true, points:conv
       });
     }
     state.curKey = nkey;
@@ -764,8 +863,10 @@ el.btnAdd.addEventListener('click', () => {
   const key = runKey();
   if (!state.datasets.some(d => d.key === key)){
     if (state.datasets.length >= MAX_SETS) return;
+    const slot = nextSlot();
     state.datasets.push({
-      id:++uid, key, name:runName(), color:nextColor(), visible:true, points:[]
+      id:++uid, key, name:runName(),
+      slot:slot.slot, color:slot.color, label:slot.label, visible:true, points:[]
     });
     renderDsList();
   }
@@ -783,14 +884,14 @@ el.btnEmpty.addEventListener('click', () => {
 el.chart.addEventListener('pointerdown', e => {
   const r = el.chart.getBoundingClientRect();
   const x = e.clientX - r.left, y = e.clientY - r.top;
-  let best = null, bd = 15;   // 命中半徑放寬到 15px，手指才點得到
+  let best = null, bd = 15 * U;   // 命中半徑放寬到 15px（隨 U 放大），手指才點得到
   for (const q of ptPix){
     const dd = Math.hypot(q.x - x, q.y - y);
     if (dd < bd){ bd = dd; best = q; }
   }
   state.tip = best ? {
     x:best.x, y:best.y, name:best.name, color:best.color,
-    text:'V = ' + best.v.toFixed(0) + ' mL　M = ' + best.m.toFixed(1) + ' g'
+    text:'V = ' + best.v.toFixed(DEC.vol) + ' mL　M = ' + best.m.toFixed(DEC.mass) + ' g'
   } : null;
   syncTip();
 });
@@ -823,10 +924,11 @@ el.btnExpAdd.addEventListener('click', () => {
     .filter(p => isFinite(p.v) && isFinite(p.m) && p.v >= 0)
     .sort((a, b) => a.v - b.v);
   if (pts.length < 2 || state.datasets.length >= MAX_SETS) return;
+  const slot = nextSlot();
   state.datasets.push({
     id:++uid, key:'exp' + uid,
     name:((state.expName || '實驗組').trim() || '實驗組') + (state.expIncl ? '・含量筒' : '・未含量筒'),
-    color:nextColor(), visible:true, points:pts
+    slot:slot.slot, color:slot.color, label:slot.label, visible:true, points:pts
   });
   state.tip = null; syncTip();
   renderDsList(); drawChart(); syncUI();
@@ -849,6 +951,7 @@ function renderDsList(){
     row.className = 'ds-row' + (d.visible ? '' : ' off');
     const dot = document.createElement('span');
     dot.className = 'ds-dot'; dot.style.background = d.color;
+    dot.textContent = d.label;   // 與圖上的代號對應，投影把顏色洗掉時仍分得出來
     const nm = document.createElement('span');
     nm.className = 'ds-name'; nm.textContent = d.name;
     const eye = document.createElement('button');
@@ -891,7 +994,7 @@ function syncUI(){
   el.selCyl.value = state.cylId;
   el.boxRho.hidden = state.liquidId !== 'custom';
   el.boxCyl.hidden = state.cylId !== 'custom';
-  el.rhoVal.textContent = state.customRho.toFixed(2);
+  el.rhoVal.textContent = state.customRho.toFixed(DEC.rho);
   el.cylVal.textContent = String(state.customCyl);
   el.tareHint.textContent = state.tare ? '讀數不含量筒 → 線過原點' : '讀數含量筒 → 線有截距';
   el.stepText.textContent = String(POUR_STEP);
@@ -900,11 +1003,37 @@ function syncUI(){
   el.dsCount.textContent = state.datasets.length + '/' + MAX_SETS;
   el.dsCount.classList.toggle('full', full);
 
-  // 訊息條不做，邊界情境改用禁用態表達：加滿、或已 5 組且這條線還不在圖上
-  el.btnAdd.disabled = state.targetV >= MAX_V || (full && !state.datasets.some(d => d.key === runKey()));
+  // 邊界情境：按鈕照樣禁用，但一定要配一句看得懂的說明。
+  // 只讓按鈕變灰等於拿 disabled 色（對比 1.38:1）傳遞資訊，學生只會覺得壞掉（DESIGN_SPEC 第 2 節）
+  const lineExists = state.datasets.some(d => d.key === runKey());
+  el.btnAdd.disabled = state.targetV >= MAX_V || (full && !lineExists);
   el.btnEmpty.disabled = state.targetV <= 0;
   el.btnAddRow.disabled = state.expRows.length >= MAX_ROWS;
   el.btnExpAdd.disabled = full || countExpPoints() < 2;
+
+  let msg = '';
+  if (isSim){
+    if (state.targetV >= MAX_V) msg = '量筒已到刻度上限 ' + MAX_V + ' mL。要換一組就按「倒空量筒」。';
+    else if (full && !lineExists) msg = '圖上已有 ' + MAX_SETS + ' 組資料，要畫新的線請先在右欄刪掉一組。';
+  } else {
+    if (full) msg = '圖上已有 ' + MAX_SETS + ' 組資料，請先在右欄刪掉一組。';
+    else if (countExpPoints() < 2) msg = '至少要有兩列「體積與質量都填好」的數據，才能畫出直線。';
+    else if (state.expRows.length >= MAX_ROWS) msg = '表格已達 ' + MAX_ROWS + ' 列上限。';
+  }
+  // flashStatus 的暫時訊息還沒過期時不覆蓋它
+  if (!statusTimer){
+    el.status.textContent = msg;
+    el.status.hidden = !msg;
+  }
+}
+
+// 暫時訊息（操作被擋下的當下要說原因），時間到就交還給 syncUI 的常態訊息
+let statusTimer = 0;
+function flashStatus(msg){
+  el.status.textContent = msg;
+  el.status.hidden = false;
+  clearTimeout(statusTimer);
+  statusTimer = setTimeout(() => { statusTimer = 0; syncUI(); }, 5000);
 }
 // 有效資料列：體積與質量都填了合法數字才算
 function countExpPoints(){
@@ -939,6 +1068,42 @@ document.addEventListener('visibilitychange', () => {
 });
 
 /* ═══ 7. 初始化 ═══ */
+// UI 等比放大（DEV_SPEC 5.4）：依「實體像素」判裝置級別，不是 CSS 寬度、也不是斷點
+function uiScale(){
+  // 網址帶 ?u=1.8 直接指定倍率，蓋過自動判定。教室大屏把帶參數的網址存成書籤即可——
+  // 自動判定依賴 screen API，它在部分環境要等很久才有值、甚至一直回 0，不能當唯一手段
+  const forced = parseFloat(new URLSearchParams(location.search).get('u'));
+  if (forced > 0) return clampScale(forced);
+  const sw = Math.max(window.screen.width || 0, window.innerWidth || 0) || 1280;
+  const cssW = window.innerWidth || sw;
+  const phys = sw * (window.devicePixelRatio || 1);   // 實體像素＝裝置級別
+  let u;
+  if (phys >= 3000){
+    // 教室觸控大屏。要補償的是「一個 CSS px 等於幾毫米」，那取決於系統縮放設定：
+    // 同一台 3840 大屏，Windows 100% 給 3840 CSS px（每 px 很小、要放大 2.3 倍），
+    // 200% 給 1920 CSS px（1.15 倍就夠）。與 CSS 寬度成正比，字的物理高度才不隨縮放設定改變
+    u = cssW / 1920 * 1.15;
+  } else if (phys >= 2000){
+    u = 1.15;   // 平板：把 12–13px 的主體字拉過 14px 的近距離可讀底線
+  } else {
+    u = 1;      // 桌機：坐 60 cm 看，現況已夠清楚
+  }
+  return clampScale(u);
+}
+// 放大到版面容不下時，flex 會被擠成負值、繪圖區被吃到剩幾十 px 高，整個畫面等於作廢
+function clampScale(u){
+  const cssW = window.innerWidth || 1280, cssH = window.innerHeight || 800;
+  return Math.max(1, Math.min(u, 4, cssW / 900, cssH / 620));
+}
+// 回傳「這次有沒有真的改變」：有改變才需要重算畫布，算出同值就回 false，不會無限循環
+function applyScale(){
+  const u = uiScale();
+  if (Math.abs(u - U) < 1e-6) return false;
+  U = u;
+  document.documentElement.style.setProperty('--u', String(U));
+  return true;
+}
+
 // 畫布尺寸與 DPR（DEV_SPEC 6.1）：高 DPR 平板鉗 2，之後一律用 CSS px 座標
 function fitCanvas(canvas){
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -965,9 +1130,34 @@ function fitAll(){
     chCtx = fitCanvas(el.chart);
   }
 }
-// 旋轉、分割畫面、面板開闔都靠這裡重算，不監聽 orientationchange
-new ResizeObserver(() => { fitAll(); drawAll(); }).observe(el.apStage);
-new ResizeObserver(() => { fitAll(); drawChart(); }).observe(el.chStage);
+/* 旋轉、分割畫面、面板開闔都靠這裡重算，不監聽 orientationchange。
+   放大係數也在這裡跟著重算：window 的 resize 事件不是每種尺寸變動都會派送
+   （實測把 viewport 從 1280 改成 810 就沒派送，U 停在舊值、clampScale 的窄視窗保護等於失效），
+   但 ResizeObserver 一定會觸發。applyScale 改了 --u 會讓版面再變一次、
+   第二輪算出同值就回 false，因此會收斂，不會無限循環。 */
+new ResizeObserver(() => { applyScale(); fitAll(); drawAll(); }).observe(el.apStage);
+new ResizeObserver(() => { applyScale(); fitAll(); drawChart(); }).observe(el.chStage);
+
+// ResizeObserver 只在 CSS 尺寸變動時觸發。換螢幕（筆電接投影機、外接不同 DPI 螢幕）時
+// DPR 變了但 CSS 尺寸沒變，canvas 會維持舊解析度而糊掉——課堂投影正是這個情境
+function watchDPR(){
+  matchMedia('(resolution: ' + (window.devicePixelRatio || 1) + 'dppx)')
+    .addEventListener('change', () => { fitAll(); drawAll(); watchDPR(); }, { once:true });
+}
+watchDPR();   // 每次觸發後要用新的 DPR 重新註冊
+
+// screen.width 在頁面剛載入時可能回報 0（或還不是真值），視窗被拖到另一台螢幕時也會變 → 必須補算。
+// 注意：本 script 放在 body 末尾，執行時 load 往往「已經觸發過」，只掛 load 監聽等於完全不會補算——
+// 實測初始化量到 U=1、下一幀才量得到正確的 1.15。所以一定要另外用 rAF 無條件補一次。
+function recalcScale(){ if (applyScale()){ fitAll(); drawAll(); } }
+window.addEventListener('resize', recalcScale);
+window.addEventListener('load', recalcScale);
+// 三種時機都掛，誰先量到真值就由誰補算（applyScale 值沒變就直接 return，重複呼叫不會重繪）：
+// load 在本 script 執行前多半已經觸發過、rAF 在背景分頁不會派送、
+// screen.width 有時要幾百毫秒才從 0 變成真值。只靠其中一個都會漏。
+requestAnimationFrame(recalcScale);
+setTimeout(recalcScale, 0);
+setTimeout(recalcScale, 400);
 
 // 分頁切換（單一 html 內以 hidden 切換，不做多頁）
 document.getElementById('nav').addEventListener('click', e => {
@@ -1012,11 +1202,38 @@ if (appEl.requestFullscreen || appEl.webkitRequestFullscreen){
   });
 } else fullBtn.hidden = true;
 
+/* 重置：state 完整還原成初始值，含圖表資料與所有顯示開關（DEV_SPEC 第 1 節）。
+   只有分頁位置保留——老師在實驗模式按重置，被踢回模擬模式是干擾，不是還原。 */
+el.btnReset.addEventListener('click', () => {
+  stopLoop();
+  const screen = state.screen;
+  state = initState();
+  state.screen = screen;
+  uid = 0;
+  clearTimeout(statusTimer); statusTimer = 0;
+  // DOM 上的開關要跟著回到 initState 的值——HTML 的 checked、initState、這裡三處必須一致
+  el.chkTare.checked = state.tare;
+  el.chkFit.checked = state.showFit;
+  el.chkGrid.checked = state.showGrid;
+  el.chkIncl.checked = state.expIncl;
+  el.expName.value = '';
+  el.rhoSlider.value = state.customRho;
+  el.cylSlider.value = state.customCyl;
+  for (const input of document.querySelectorAll('input[type="range"]')) refreshFill(input);
+  buildExpRows(); renderDsList(); syncTip(); syncUI(); fitAll(); drawAll();
+});
+
 // 說明彈窗
 const helpModal = document.getElementById('helpModal');
 document.getElementById('btnHelp').addEventListener('click', () => helpModal.classList.add('open'));
 document.getElementById('btnCloseHelp').addEventListener('click', () => helpModal.classList.remove('open'));
 helpModal.addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('open'); });
+
+// 初值也必須無條件寫進 CSS 變數：applyScale() 只在「值有變化」時才寫，
+// 若載入當下算出的 U 就是最終值，CSS 的 --u 會一直停在 :root 的預設 1，
+// 於是 canvas 用 U 排版、CSS 用 1，兩者對不上（DEV_SPEC 第 1 節「單一真相來源」）
+U = uiScale();
+document.documentElement.style.setProperty('--u', String(U));
 
 buildOptions();
 buildExpRows();
