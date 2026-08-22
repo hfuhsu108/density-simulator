@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1E2836">
+<title>液體的體積與質量關係｜國中理化模擬</title>
+<!-- Font Awesome 6：唯一允許的外部資源（DEV_SPEC 鐵律 10） -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+/* ═══ 1. CSS 變數（對照 ../_shared/design/DESIGN_SPEC.md 第 2 節） ═══ */
+:root{
+  --c-primary:#2A6FDB;
+  --c-primary-dark:#1E57B0;
+  --c-primary-soft:#E8F0FD;
+  --c-primary-soft-bd:#C4D7F5;
+  --c-nav:#1E2836;
+  --c-nav-idle:#9DAABB;
+  --c-bg:#F6F7F9;
+  --c-surface:#FFFFFF;
+  --c-bd:#E2E5EA;
+  --c-bd-ctl:#CFD5DD;
+  --c-bd-soft:#EEF0F3;
+  --c-text:#1C2433;
+  --c-text-2:#445062;
+  --c-text-3:#7A8496;
+  --c-ok:#2F9E63;
+  --c-warn:#D64545;
+  --c-disabled:#B9C0CF;
+}
+
+/* ═══ 2. base：字體、上下標、觸控（DEV_SPEC 第 3、4、5 節） ═══ */
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden;overscroll-behavior:none}
+body{
+  font-family:system-ui,-apple-system,"Segoe UI","PingFang TC","Microsoft JhengHei",sans-serif;
+  color:var(--c-text);
+  line-height:1.5;
+  -webkit-text-size-adjust:100%;
+}
+/* 上下標標準做法：line-height:0 不撐高行盒，跨 Windows/iPadOS 不跑版 */
+sub,sup{font-size:.62em;line-height:0;position:relative;vertical-align:baseline}
+sup{top:-.55em}
+sub{bottom:-.22em}
+.num-val{font-variant-numeric:tabular-nums}
+/* 區塊標題統一在此定義：只寫 .panel h2 會漏掉右欄，讓它吃到瀏覽器預設的 1.5em */
+h2{font-size:13px;font-weight:700;margin:0}
+button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:pointer}
+input,select{font-family:inherit}
+/* 模式切換與條件顯示統一用 hidden 屬性，優先序要壓過各元件的 display */
+[hidden]{display:none!important}
+/* 互動區禁選字、去 iOS 點擊灰底與長按選單 */
+.app{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+button,.chip,input[type="range"],label.check,label.switch{touch-action:manipulation}
+canvas{touch-action:none;display:block}
+
+/* ═══ 3. 版面：Header / 三欄 / 抽屜 / 導覽列（../_shared/design/layout.html） ═══ */
+.app{
+  height:100vh;   /* fallback */
+  height:100dvh;  /* iPad Safari 工具列收合時的正確高度 */
+  display:flex;flex-direction:column;background:var(--c-bg);
+}
+.topbar{height:50px;flex:none;display:flex;align-items:center;gap:12px;padding:0 18px;background:var(--c-surface);border-bottom:1px solid var(--c-bd)}
+.logo{width:28px;height:28px;border-radius:7px;background:var(--c-primary);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex:none}
+.title{font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .actions{margin-left:auto;display:flex;gap:8px}
+.icon-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--c-bd-ctl);background:var(--c-surface);display:flex;align-items:center;justify-content:center;color:var(--c-text-2);font-size:14px}
+
+main{flex:1;position:relative;display:grid;grid-template-columns:1fr 2fr 1fr;gap:12px;padding:12px 14px 0;min-height:0}
+.panel{background:var(--c-surface);border:1px solid var(--c-bd);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:14px;min-width:0;overflow-y:auto}
+.hr{height:1px;background:var(--c-bd);flex:none}
+
+/* 中欄上下二分：器材 44% / 座標圖 56%；實驗模式時器材收起，圖表佔滿。
+   兩塊都設 min-height 並讓中欄可捲動——否則視窗一矮，器材會把圖表擠成 0 高而整個消失 */
+.midcol{display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0;overflow-y:auto}
+.stage{position:relative;flex:1 1 44%;min-height:130px;border-radius:10px;border:1px solid #C4D3E8;overflow:hidden;background:#FDFAF3}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%}
+/* 座標圖光是四邊 padding 就吃掉約 96px，低於 160px 畫出來不具可讀性 */
+.chartbox{flex:1 1 56%;min-height:160px;background:var(--c-surface);border:1px solid var(--c-bd);border-radius:10px;padding:10px 12px 8px;display:flex;flex-direction:column}
+.chartwrap{position:relative;flex:1;min-height:0}
+.chartwrap canvas{position:absolute;inset:0;width:100%;height:100%}
+/* 資料點提示：canvas 畫圖、DOM 顯示提示，文字才不會被 DPR 影響 */
+.tip{position:absolute;pointer-events:none;transform:translate(-50%,-128%);background:var(--c-surface);border:1px solid var(--c-primary-soft-bd);border-radius:8px;padding:5px 9px;font-size:12px;font-variant-numeric:tabular-nums;box-shadow:0 4px 12px rgba(28,36,51,.14);white-space:nowrap}
+.tip .nm{font-weight:700}
+
+/* 右欄：圖上的數據組 */
+.datacol{background:var(--c-surface);border:1px solid var(--c-bd);border-radius:10px;padding:10px 10px 6px;display:flex;flex-direction:column;gap:6px;min-width:0;overflow:hidden}
+/* 右欄在 iPad 橫向只有 243px：標題與「清空」都要 nowrap，否則會斷成兩行 */
+.ds-head{display:flex;align-items:center;justify-content:space-between;gap:6px;flex:none}
+.ds-head h2{white-space:nowrap}
+.ds-count{color:var(--c-text-3);font-weight:400}
+.ds-count.full{color:var(--c-warn);font-weight:700}
+.ds-list{flex:1;overflow-y:auto;min-height:0}
+.ds-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--c-bd-soft)}
+.ds-row.off{opacity:.42}
+.ds-dot{width:11px;height:11px;border-radius:50%;flex:none}
+.ds-name{flex:1;font-size:12.5px;font-weight:700;line-height:1.3;min-width:0;overflow-wrap:anywhere}
+.ds-btn{width:36px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--c-text-3);font-size:13px;flex:none}
+.ds-empty{font-size:12.5px;color:var(--c-text-3);padding:8px 2px;line-height:1.5}
+
+.drawer{flex:none;margin:12px 14px;background:var(--c-surface);border:1px solid var(--c-bd);border-radius:12px;padding:8px 18px 10px;box-shadow:0 -4px 12px rgba(28,36,51,.05)}
+.drawer .handle{width:44px;height:5px;border-radius:3px;background:#D7DBE2;margin:0 auto 8px}
+.drawer .row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.btns{display:flex;gap:8px;flex:none}
+.drawer .hint{font-size:12.5px;color:var(--c-text-3)}
+.mobile-tabs{display:none;gap:8px;flex:none;margin-left:auto}
+
+.bottomnav{height:56px;flex:none;display:flex;align-items:center;padding:0 18px;background:var(--c-nav);gap:6px}
+.navtab{white-space:nowrap;flex:none;height:38px;padding:0 18px;border-radius:8px;color:var(--c-nav-idle);font-size:13.5px;display:flex;align-items:center}
+.navtab[aria-selected="true"]{background:var(--c-primary);color:#fff;font-weight:700}
+.nav-note{margin-left:auto;font-size:12px;color:var(--c-nav-idle)}
+
+/* ═══ 4. 元件（../_shared/design/components-spec.html） ═══ */
+.field{display:flex;flex-direction:column;gap:6px}
+.field .name{font-size:13px;font-weight:700;color:var(--c-text-2)}
+
+/* 輸入類一律 ≥16px，否則 iOS Safari 聚焦會放大整頁 */
+.inp{height:44px;border-radius:10px;border:1px solid var(--c-bd-ctl);background:var(--c-surface);padding:0 10px;font-size:16px;color:var(--c-text);width:100%}
+.inp:focus{border-color:var(--c-primary);outline:none;box-shadow:0 0 0 3px rgba(42,111,219,.15)}
+.inp.num{font-variant-numeric:tabular-nums;border-radius:8px;padding:0 8px}
+
+.btn{height:44px;padding:0 18px;border-radius:10px;background:var(--c-surface);border:1px solid var(--c-bd-ctl);color:var(--c-text-2);font-size:14px;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.btn.primary{background:var(--c-primary);border-color:var(--c-primary);color:#fff;font-weight:700}
+.btn:disabled{cursor:default;background:var(--c-bg);border-color:var(--c-bd);color:var(--c-disabled)}
+.btn.primary:disabled{background:var(--c-disabled);border-color:var(--c-disabled);color:#fff}
+.btn-dash{height:40px;border-radius:8px;border:1px dashed var(--c-bd-ctl);color:var(--c-text-2);font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;width:100%}
+.btn-dash:disabled{cursor:default;color:var(--c-disabled);border-color:var(--c-bd)}
+.link-btn{font-size:12px;color:var(--c-text-3);height:32px;padding:0 6px;white-space:nowrap;flex:none}
+
+.chip{white-space:nowrap;height:40px;padding:0 14px;border-radius:8px;background:var(--c-surface);border:1px solid var(--c-bd-ctl);color:var(--c-text-2);font-size:13px;display:flex;align-items:center;gap:6px}
+.chip[aria-pressed="true"]{background:var(--c-primary);border-color:var(--c-primary);color:#fff;font-weight:700}
+
+/* DESIGN_SPEC 給的視覺尺寸（icon 鈕 34px、分頁 38px）小於鐵律 6 的 44px：
+   比照滑桿把手的處理，視覺尺寸不動，用透明區把感應範圍補到 44px */
+.icon-btn,.link-btn,.navtab,.chip,.ds-btn{position:relative}
+.icon-btn::after,.link-btn::after,.navtab::after,.chip::after,.ds-btn::after{
+  content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:max(100%,44px);height:max(100%,44px);
+}
+
+.sliderbox .head{display:flex;justify-content:space-between;font-size:13px;margin-bottom:2px}
+.sliderbox .head .name{color:var(--c-text-2);font-weight:700}
+.sliderbox .head .val{font-weight:700;font-variant-numeric:tabular-nums}
+.sliderbox .minmax{display:flex;justify-content:space-between;font-size:11.5px;color:var(--c-text-3)}
+/* 滑桿：軌 6px、把手 22px、感應高度 44px（透明區） */
+input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:44px;margin:0;background:transparent}
+input[type="range"]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:linear-gradient(to right,var(--c-primary) var(--fill,50%),#D3D9E1 var(--fill,50%))}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--c-primary);margin-top:-8px;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+input[type="range"]::-moz-range-track{height:6px;border-radius:3px;background:#D3D9E1}
+input[type="range"]::-moz-range-progress{height:6px;border-radius:3px;background:var(--c-primary)}
+input[type="range"]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--c-primary);box-shadow:0 1px 3px rgba(0,0,0,.2)}
+
+label.check{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--c-text-2);min-height:44px;line-height:1.3}
+label.check input{position:absolute;opacity:0;width:0;height:0}
+label.check .box{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--c-bd-ctl);background:var(--c-surface);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;flex:none}
+label.check input:checked+.box{background:var(--c-primary);border-color:var(--c-primary)}
+label.check .box i{visibility:hidden}
+label.check input:checked+.box i{visibility:visible}
+
+label.switch{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--c-text-2);min-height:44px;line-height:1.3}
+label.switch input{position:absolute;opacity:0;width:0;height:0}
+label.switch .track{width:52px;height:30px;border-radius:15px;background:var(--c-bd-ctl);position:relative;flex:none;transition:background .15s}
+label.switch .track::after{content:"";position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .15s}
+label.switch input:checked+.track{background:var(--c-primary)}
+label.switch input:checked+.track::after{left:25px}
+label.switch .sub{font-size:11.5px;color:var(--c-text-3);display:block}
+
+/* 實驗數據表格 */
+.exp-table{display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:center}
+.exp-table .th{font-size:12.5px;color:var(--c-text-3);font-weight:700}
+.note{font-size:12px;color:var(--c-text-3);margin:0;line-height:1.5}
+
+/* 說明彈窗 */
+.modal{position:fixed;inset:0;background:rgba(28,36,51,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal.open{display:flex}
+.modal .box{background:var(--c-surface);border-radius:14px;padding:22px 24px;max-width:540px;max-height:82%;overflow-y:auto;user-select:text;-webkit-user-select:text}
+.modal h3{font-size:17px;margin:0 0 10px}
+.modal p{font-size:13.5px;color:var(--c-text-2);margin:0 0 10px;line-height:1.6}
+
+/* hover 一律包在 (hover:hover)，iPad 點擊才不會殘留 hover 狀態 */
+@media (hover:hover){
+  .icon-btn:hover{border-color:var(--c-primary);color:var(--c-primary)}
+  .btn:not(:disabled):hover{border-color:var(--c-primary);color:var(--c-primary)}
+  .btn.primary:not(:disabled):hover{background:var(--c-primary-dark);border-color:var(--c-primary-dark);color:#fff}
+  .btn-dash:not(:disabled):hover{border-color:var(--c-primary);color:var(--c-primary)}
+  .link-btn:hover{color:var(--c-warn)}
+  .chip[aria-pressed="false"]:hover{border-color:var(--c-primary)}
+  .navtab[aria-selected="false"]:hover{color:#fff}
+  .ds-btn:hover{color:var(--c-primary)}
+  .ds-btn.del:hover{color:var(--c-warn)}
+}
+
+/* ═══ 5. 響應式：<900px（涵蓋所有 iPad 直向 768/820/834）左右欄摺入底部分頁 ═══ */
+@media (max-width:899px){
+  main{grid-template-columns:1fr}
+  .panel,.datacol{display:none}
+  .mobile-tabs{display:flex}
+  body.show-settings .panel:not([hidden]){display:flex;position:absolute;left:14px;right:14px;bottom:0;max-height:64%;z-index:5;box-shadow:0 8px 28px rgba(28,36,51,.25)}
+  body.show-data .datacol{display:flex;position:absolute;left:14px;right:14px;bottom:0;max-height:64%;z-index:5;box-shadow:0 8px 28px rgba(28,36,51,.22)}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- Header -->
+  <header class="topbar">
+    <div class="logo">理</div>
+    <div class="title">液體的體積與質量關係</div>
+    <div class="actions">
+      <button class="icon-btn" id="btnHelp" aria-label="操作說明"><i class="fa-solid fa-question"></i></button>
+      <button class="icon-btn" id="btnFull" aria-label="全螢幕"><i class="fa-solid fa-expand"></i></button>
+    </div>
+  </header>
+
+  <!-- 三欄：設定｜器材＋座標圖｜數據組 -->
+  <main>
+    <!-- 左欄之一：模擬模式設定 -->
+    <section class="panel" id="panelSim">
+      <h2>設定</h2>
+
+      <div class="field">
+        <span class="name">液體種類</span>
+        <select class="inp" id="selLiquid" aria-label="液體種類"></select>
+      </div>
+
+      <div class="sliderbox" id="boxRho" hidden>
+        <div class="head"><span class="name">自訂密度 D</span><span class="val"><span id="rhoVal">1.05</span> g/cm³</span></div>
+        <input type="range" id="rhoSlider" min="0.6" max="1.4" step="0.01" value="1.05" aria-label="自訂密度">
+        <div class="minmax"><span>0.60</span><span>1.40</span></div>
+      </div>
+
+      <div class="field">
+        <span class="name">量筒</span>
+        <select class="inp" id="selCyl" aria-label="量筒"></select>
+      </div>
+
+      <div class="sliderbox" id="boxCyl" hidden>
+        <div class="head"><span class="name">量筒質量 M</span><span class="val"><span id="cylVal">30</span> g</span></div>
+        <input type="range" id="cylSlider" min="0" max="80" step="1" value="30" aria-label="量筒質量">
+        <div class="minmax"><span>0</span><span>80</span></div>
+      </div>
+
+      <div class="hr"></div>
+
+      <label class="switch">
+        <input type="checkbox" id="chkTare"><span class="track"></span>
+        <span>天秤歸零（去皮）<span class="sub" id="tareHint">讀數含量筒 → 線有截距</span></span>
+      </label>
+      <label class="check">
+        <input type="checkbox" id="chkFit" checked><span class="box"><i class="fa-solid fa-check"></i></span>顯示直線與截距
+      </label>
+      <label class="check">
+        <input type="checkbox" id="chkGrid" checked><span class="box"><i class="fa-solid fa-check"></i></span>顯示格線
+      </label>
+    </section>
+
+    <!-- 左欄之二：實驗模式輸入 -->
+    <section class="panel" id="panelExp" hidden>
+      <h2>實驗數據輸入</h2>
+      <div class="field">
+        <span class="name">這組數據的名稱</span>
+        <input type="text" class="inp" id="expName" placeholder="例：自來水" aria-label="這組數據的名稱">
+      </div>
+      <label class="check">
+        <input type="checkbox" id="chkIncl" checked><span class="box"><i class="fa-solid fa-check"></i></span>質量含量筒（沒有去皮）
+      </label>
+      <div class="exp-table" id="expTable">
+        <span class="th">體積 V (mL)</span>
+        <span class="th">質量 M (g)</span>
+      </div>
+      <button class="btn-dash" id="btnAddRow"><i class="fa-solid fa-plus"></i>新增一列</button>
+      <p class="note">量完一組（至少兩列）後，按下方「加入圖表」，就會用最小平方法畫出這組的直線。</p>
+    </section>
+
+    <!-- 中欄：器材舞台（僅模擬模式）＋座標圖 -->
+    <div class="midcol">
+      <div class="stage" id="apStage">
+        <canvas id="apBg"></canvas>
+        <canvas id="apFg"></canvas>
+      </div>
+      <div class="chartbox">
+        <div class="chartwrap" id="chStage">
+          <canvas id="chart"></canvas>
+          <div class="tip" id="tip" hidden></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右欄：圖上的數據組 -->
+    <section class="datacol" id="panelData">
+      <div class="ds-head">
+        <h2>圖上的數據組 <span class="ds-count num-val" id="dsCount">0/5</span></h2>
+        <button class="link-btn" id="btnClearAll">清空</button>
+      </div>
+      <div class="ds-list" id="dsList"></div>
+    </section>
+  </main>
+
+  <!-- 底部抽屜：本模式的主要動作 -->
+  <div class="drawer">
+    <div class="handle"></div>
+    <div class="row">
+      <div class="btns" id="simBtns">
+        <button class="btn primary" id="btnAdd"><i class="fa-solid fa-droplet"></i>加 <span class="num-val" id="stepText">10</span> mL</button>
+        <button class="btn" id="btnEmpty"><i class="fa-solid fa-arrow-rotate-left"></i>倒空量筒</button>
+      </div>
+      <div class="btns" id="expBtns" hidden>
+        <button class="btn primary" id="btnExpAdd"><i class="fa-solid fa-chart-line"></i>加入圖表</button>
+        <button class="btn" id="btnExpClear">清空表格</button>
+      </div>
+      <span class="hint" id="expHint" hidden>在左欄填入實際量到的體積與質量，可自訂體積值。</span>
+      <div class="mobile-tabs">
+        <button class="chip" id="tabSettings" aria-pressed="false"><i class="fa-solid fa-gear"></i>設定</button>
+        <button class="chip" id="tabData" aria-pressed="false"><i class="fa-solid fa-chart-simple"></i>數據</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部導覽列：單元內分頁（PhET screens） -->
+  <nav class="bottomnav" id="nav">
+    <button class="navtab" data-screen="0" aria-selected="true">模擬模式</button>
+    <button class="navtab" data-screen="1" aria-selected="false">實驗模式</button>
+    <span class="nav-note">體積與質量的關係</span>
+  </nav>
+</div>
+
+<!-- 說明彈窗 -->
+<div class="modal" id="helpModal">
+  <div class="box">
+    <h3>怎麼用</h3>
+    <p>「模擬模式」選好液體與量筒，按 <b>加 10 mL</b> 逐次注水；每次水位停穩，圖上就多一個點。「實驗模式」把真實量到的數字填進左欄表格，再按<b>加入圖表</b>。</p>
+    <p>直線公式：M = D × V + M<sub>量筒</sub>（M 質量、V 體積、D 密度）。<b>斜率就是液體密度 D</b>，<b>截距就是量筒質量 M</b>。打開「天秤歸零（去皮）」等於扣掉量筒，線就會通過原點。</p>
+    <p>同一種液體換不同量筒 → 兩條線<b>平行</b>；換密度不同的液體 → <b>斜率</b>改變，密度愈大線愈陡。圖上最多同時放 5 組。</p>
+    <button class="btn primary" id="btnCloseHelp" style="margin-left:auto">關閉</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ═══ 1. 常數 ═══ */
+const FONT_STACK = 'system-ui, -apple-system, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif';
+
+// 密度單位 g/cm³；c1/c2 是量筒內液體的漸層雙色（DESIGN_SPEC 第 3 節環境物質配色）
+const LIQUIDS = [
+  { id:'water',    name:'水',         rho:1.00, c1:'#DBEAFE', c2:'#93C5FD' },
+  { id:'brine',    name:'飽和食鹽水', rho:1.20, c1:'#E1EEF6', c2:'#9BC8DC' },
+  { id:'alcohol',  name:'酒精',       rho:0.80, c1:'#EEF2FF', c2:'#C7D2FE' },
+  { id:'oil',      name:'食用油',     rho:0.90, c1:'#FDF6DA', c2:'#F0D264' },
+  // 未知液體不在選單顯示密度，讓學生從斜率反推
+  { id:'unknownA', name:'未知液體A',  rho:0.60, unknown:true, c1:'#EDEFF3', c2:'#B9C0CF' },
+  { id:'unknownB', name:'未知液體B',  rho:1.10, unknown:true, c1:'#F1E9F7', c2:'#C9AEDD' },
+  { id:'custom',   name:'自訂液體',   rho:null, c1:'#DBEAFE', c2:'#93C5FD' }
+];
+const CYLS = [
+  { id:'a', name:'量筒甲', m:45 },
+  { id:'b', name:'量筒乙', m:68 },
+  { id:'custom', name:'自訂量筒', m:null }
+];
+// 圖表序列色（DESIGN_SPEC 第 3 節：藍→綠→橘→紫→青），數量即為資料組上限
+const SERIES = ['#2A6FDB', '#2F9E63', '#E8871E', '#8B5CF6', '#0F8A8A'];
+const C = {
+  bench:'#FDFAF3', benchEdge:'#F0EDE4', metal:'#8A94A3', metalLt:'#B4BCC7', line:'#5F6B7E',
+  glass:'rgba(197,221,232,.55)', beaker:'rgba(197,221,232,.5)', surface:'rgba(42,111,219,.45)',
+  lcd:'#1C2433', ok:'#2F9E63', grid:'#EEF1F5', axis:'#CFD5DD', tick:'#7A8496', axisLabel:'#445062', empty:'#9AA3B2'
+};
+const MAX_V = 50;        // 量筒刻度上限（mL）
+const POUR_STEP = 10;    // 每次注水量（mL）
+const CAP = MAX_V + 10;  // 量筒實際容量：頂端留白，水位才不會貼齊筒口
+const POUR_RATE = 22;    // 注水速率（mL/s）
+const MAX_SETS = SERIES.length;
+const MAX_ROWS = 8;
+
+/* ═══ 2. state：單一物件，重置時整個換新 ═══ */
+function initState(){
+  return {
+    screen:0,                 // 0 模擬模式、1 實驗模式
+    liquidId:'water', customRho:1.05,
+    cylId:'a', customCyl:30,
+    tare:false,
+    v:0,                      // 目前水位（mL），動畫每幀逼近 targetV
+    targetV:0,                // 注水目標水位
+    pouring:false,            // 正在注水（決定要不要畫水流）
+    datasets:[], curKey:null,
+    showFit:true, showGrid:true,
+    tip:null,
+    expName:'', expIncl:true,
+    expRows:[{v:10,m:''},{v:20,m:''},{v:30,m:''},{v:40,m:''},{v:50,m:''}]
+  };
+}
+let state = initState();
+
+/* ═══ 3. 物理模型：純計算，不碰 DOM / canvas ═══ */
+let uid = 0;   // 資料組流水號，只用來當刪除／切換的識別，不參與計算
+
+function liquid(){ return LIQUIDS.find(l => l.id === state.liquidId) || LIQUIDS[0]; }
+function rho(){ const l = liquid(); return l.rho === null ? state.customRho : l.rho; }
+function cylDef(){ return CYLS.find(c => c.id === state.cylId) || CYLS[0]; }
+function cylMass(){ const c = cylDef(); return c.m === null ? state.customCyl : c.m; }
+function liqName(){ const l = liquid(); return l.rho === null ? '自訂 D ' + rho().toFixed(2) : l.name; }
+// 同一組「液體＋密度＋去皮與否＋量筒質量」的注水視為同一條線，續用不新增
+function runKey(){ return [state.liquidId, rho().toFixed(2), state.tare ? 'n' : 'y', cylMass()].join('|'); }
+function runName(){ return liqName() + (state.tare ? '・未含量筒' : '・含量筒 ' + cylMass() + ' g'); }
+function nextColor(){ return SERIES.find(c => !state.datasets.some(d => d.color === c)) || SERIES[0]; }
+// 天秤讀數：M = D × V ＋ 量筒質量（去皮則不含量筒）
+function massAt(v){ return rho() * v + (state.tare ? 0 : cylMass()); }
+
+// 水位朝目標逼近；回傳 true 表示這一幀剛注滿到定位，該落一個資料點
+function update(dt){
+  const t = state.targetV;
+  if (state.v < t - 0.001){
+    state.pouring = true;
+    state.v = Math.min(t, state.v + POUR_RATE * dt);
+    if (state.v >= t - 0.001){ state.v = t; state.pouring = false; return true; }
+  } else if (state.v > t + 0.001){
+    // 倒空比注水快，否則學生每次重來都要等
+    state.pouring = false;
+    state.v = Math.max(t, state.v - POUR_RATE * 2.4 * dt);
+  }
+  return false;
+}
+// 落點：同一體積重複量到就覆蓋，不堆疊成兩點
+function commit(v){
+  const d = state.datasets.find(x => x.key === state.curKey);
+  if (!d) return;
+  d.points = d.points.filter(p => Math.abs(p.v - v) > 0.01)
+                     .concat([{ v, m: massAt(v) }])
+                     .sort((a, b) => a.v - b.v);
+}
+// 最小平方法。截距極接近 0 時歸零，免得浮點誤差把「過原點」顯示成 0.03 g
+function fit2(pts){
+  const n = pts.length; if (n < 2) return null;
+  let sx = 0, sy = 0, sxx = 0, sxy = 0;
+  for (const p of pts){ sx += p.v; sy += p.m; sxx += p.v * p.v; sxy += p.v * p.m; }
+  const den = n * sxx - sx * sx; if (Math.abs(den) < 1e-9) return null;
+  const a = (n * sxy - sx * sy) / den;
+  let b = (sy - a * sx) / n;
+  if (Math.abs(b) < 0.05) b = 0;
+  return { a, b };
+}
+
+/* ═══ 4. 繪製：讀 state 畫畫面，不改 state ═══ */
+let apBgCtx = null, apFgCtx = null, chCtx = null;
+let geo = null, beaker = null;
+const size = { ch:{ w:0, h:0 } };
+// 資料點的螢幕座標，供點擊命中測試（繪製的副產品，不是模型狀態）
+let ptPix = [];
+
+function rr(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function calcGeo(W, H){
+  const balW = Math.min(250, W * 0.62), balH = 42;
+  const cx = W * 0.42, baseY = H - 14;
+  const balTop = baseY - balH, platTop = balTop - 9;
+  const cylW = Math.max(52, Math.min(78, W * 0.2));
+  // 上方要留位置給量杯與水流，否則高度不夠時量筒頂端會被切掉
+  const cylH = Math.max(66, Math.min(H - 14 - balH - 9 - 62, 200));
+  const cylBot = platTop, cylTop = cylBot - cylH;
+  return { W, H, cx, baseY, balX: cx - balW / 2, balW, balH, balTop, platTop,
+           cylX: cx - cylW / 2, cylW, cylTop, cylBot,
+           innerBot: cylBot - 7, innerTop: cylTop + 15 };
+}
+function yForV(v){ return geo.innerBot - (v / CAP) * (geo.innerBot - geo.innerTop); }
+
+// 背景層：檯面、天秤、量筒玻璃與刻度、上方量杯。只在尺寸或器材變更時重畫
+function drawApBg(){
+  const ctx = apBgCtx, g = geo; if (!ctx || !g) return;
+  ctx.clearRect(0, 0, g.W, g.H);
+  ctx.fillStyle = C.bench; ctx.fillRect(0, 0, g.W, g.H);
+  ctx.fillStyle = C.benchEdge; ctx.fillRect(0, g.baseY, g.W, g.H - g.baseY);
+
+  rr(ctx, g.balX, g.balTop, g.balW, g.balH, 6);
+  ctx.fillStyle = C.metal; ctx.fill();
+  ctx.strokeStyle = C.line; ctx.lineWidth = 2; ctx.stroke();
+  rr(ctx, g.cx - g.balW * 0.34, g.platTop, g.balW * 0.68, 10, 3);
+  ctx.fillStyle = C.metalLt; ctx.fill(); ctx.strokeStyle = C.line; ctx.stroke();
+
+  ctx.save();
+  ctx.fillStyle = C.glass;
+  rr(ctx, g.cylX, g.cylTop, g.cylW, g.cylBot - g.cylTop, 7); ctx.fill();
+  ctx.strokeStyle = C.line; ctx.lineWidth = 3; ctx.stroke();
+  ctx.restore();
+
+  ctx.strokeStyle = C.line; ctx.lineWidth = 2;
+  ctx.font = '11px ' + FONT_STACK; ctx.fillStyle = C.line;
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  // 量筒矮的時候只標偶數刻度，避免數字疊在一起
+  const labelEvery = (g.innerBot - g.innerTop) / (CAP / 10) < 15 ? 20 : 10;
+  for (let v = 10; v <= CAP; v += 10){
+    const y = yForV(v);
+    if (y < g.cylTop + 6) break;
+    ctx.beginPath();
+    ctx.moveTo(g.cylX + 3, y);
+    ctx.lineTo(g.cylX + (v % labelEvery === 0 ? 16 : 10), y);
+    ctx.stroke();
+    if (v % labelEvery === 0) ctx.fillText(String(v), g.cylX + g.cylW - 6, y);
+  }
+  if (g.cylTop > 16){
+    ctx.textAlign = 'center';
+    ctx.font = '700 11px ' + FONT_STACK;
+    ctx.fillText('mL', g.cylX + g.cylW / 2, g.cylTop - 9);
+  }
+  // 上方量杯：空間不足就不畫，水流改成從畫面上緣落下
+  const bw = 54, bh = 36, bx = g.cx - bw / 2, by = g.cylTop - 58;
+  if (by > 2){
+    rr(ctx, bx, by, bw, bh, 5);
+    ctx.fillStyle = C.beaker; ctx.fill();
+    ctx.strokeStyle = C.line; ctx.lineWidth = 2.5; ctx.stroke();
+    beaker = { x:bx, y:by, w:bw, h:bh };
+  } else beaker = null;
+}
+
+// 前景層：量筒內液體、水流、天秤讀數。每幀重畫
+function drawApFg(){
+  const ctx = apFgCtx, g = geo; if (!ctx || !g) return;
+  const L = liquid(), v = state.v;
+  ctx.clearRect(0, 0, g.W, g.H);
+
+  if (v > 0.05){
+    const top = yForV(v);
+    const grad = ctx.createLinearGradient(0, top, 0, g.innerBot);
+    grad.addColorStop(0, L.c1); grad.addColorStop(1, L.c2);
+    ctx.save();
+    rr(ctx, g.cylX + 3, top, g.cylW - 6, g.innerBot - top + 2, 5);
+    ctx.fillStyle = grad; ctx.fill();
+    ctx.fillStyle = C.surface;
+    ctx.fillRect(g.cylX + 3, top - 1, g.cylW - 6, 2);
+    ctx.restore();
+  }
+  if (beaker){
+    ctx.fillStyle = L.c2;
+    rr(ctx, beaker.x + 3, beaker.y + beaker.h * 0.42, beaker.w - 6, beaker.h * 0.58 - 3, 4);
+    ctx.fill();
+  }
+  if (state.pouring){
+    const top = beaker ? beaker.y + beaker.h : 0;
+    const bot = v > 0.05 ? yForV(v) : g.innerBot;
+    ctx.fillStyle = L.c2;
+    ctx.fillRect(g.cx - 3, top, 6, Math.max(0, bot - top));
+    ctx.beginPath(); ctx.ellipse(g.cx, bot, 11, 3.5, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fill();
+  }
+  // 天秤顯示器
+  const dw = 104, dh = 26, dx = g.balX + 14, dy = g.balTop + (g.balH - dh) / 2;
+  rr(ctx, dx, dy, dw, dh, 5); ctx.fillStyle = C.lcd; ctx.fill();
+  ctx.font = '700 16px ' + FONT_STACK; ctx.fillStyle = '#fff';
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  ctx.fillText(massAt(v).toFixed(1) + ' g', dx + dw - 8, dy + dh / 2 + 1);
+  if (state.tare){
+    ctx.font = '700 9px ' + FONT_STACK; ctx.fillStyle = C.ok; ctx.textAlign = 'left';
+    ctx.fillText('TARE', dx + 7, dy + dh / 2 + 1);
+  }
+  ctx.beginPath(); ctx.arc(g.balX + g.balW - 16, g.balTop + g.balH / 2, 4, 0, Math.PI * 2);
+  ctx.fillStyle = C.ok; ctx.fill();
+}
+
+// 座標軸刻度間距候選：挑第一個不小於目標值的，避免出現 37 這種刻度
+function nice(v){
+  for (const c of [1, 2, 5, 10, 20, 25, 50, 100, 200]) if (c >= v) return c;
+  return 500;
+}
+
+function drawChart(){
+  const ctx = chCtx, s = size.ch; if (!ctx || !s.w) return;
+  const W = s.w, H = s.h;
+  ctx.clearRect(0, 0, W, H);
+  const vis = state.datasets.filter(d => d.visible);
+
+  let maxV = MAX_V, maxM = 40;
+  for (const d of vis) for (const p of d.points){
+    maxV = Math.max(maxV, p.v); maxM = Math.max(maxM, p.m);
+  }
+  const xMax = Math.ceil((maxV + 10) / 10) * 10;
+  const yStep = nice(maxM * 1.12 / 5);
+  const yMax = Math.max(yStep * 2, Math.ceil(maxM * 1.12 / yStep) * yStep);
+  const padL = 48, padR = 16, padT = 14, padB = 34;
+  const X = v => padL + (v / xMax) * (W - padL - padR);
+  const Y = m => H - padB - (m / yMax) * (H - padT - padB);
+
+  if (state.showGrid){
+    ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+    for (let v = 10; v <= xMax; v += 10){
+      ctx.beginPath(); ctx.moveTo(X(v), padT); ctx.lineTo(X(v), H - padB); ctx.stroke();
+    }
+    for (let m = yStep; m <= yMax; m += yStep){
+      ctx.beginPath(); ctx.moveTo(padL, Y(m)); ctx.lineTo(W - padR, Y(m)); ctx.stroke();
+    }
+  }
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(padL, padT); ctx.lineTo(padL, H - padB); ctx.lineTo(W - padR, H - padB); ctx.stroke();
+
+  ctx.fillStyle = C.tick; ctx.font = '11px ' + FONT_STACK;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (let v = 0; v <= xMax; v += 10) ctx.fillText(String(v), X(v), H - padB + 7);
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (let m = 0; m <= yMax; m += yStep) ctx.fillText(String(m), padL - 7, Y(m));
+
+  ctx.font = '700 12px ' + FONT_STACK; ctx.fillStyle = C.axisLabel;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  ctx.fillText('體積 V (mL)', (padL + W - padR) / 2, H - 4);
+  ctx.save();
+  ctx.translate(13, (padT + H - padB) / 2); ctx.rotate(-Math.PI / 2);
+  ctx.textBaseline = 'middle'; ctx.fillText('質量 M (g)', 0, 0);
+  ctx.restore();
+
+  ptPix = [];
+  ctx.save();
+  ctx.beginPath(); ctx.rect(padL, padT - 4, W - padL - padR, H - padT - padB + 4); ctx.clip();
+  for (const d of vis){
+    const f = fit2(d.points);
+    if (f && state.showFit){
+      ctx.strokeStyle = d.color; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(X(0), Y(f.b)); ctx.lineTo(X(xMax), Y(f.a * xMax + f.b)); ctx.stroke();
+      // 截距夠大才標：這個空心圓就是「量筒質量」的視覺錨點
+      if (f.b > 0.6){
+        ctx.beginPath(); ctx.arc(X(0), Y(f.b), 5, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff'; ctx.fill();
+        ctx.strokeStyle = d.color; ctx.lineWidth = 2.5; ctx.stroke();
+      }
+    }
+    for (const p of d.points){
+      const px = X(p.v), py = Y(p.m);
+      ctx.beginPath(); ctx.arc(px, py, 4.6, 0, Math.PI * 2);
+      ctx.fillStyle = d.color; ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.6; ctx.stroke();
+      ptPix.push({ x:px, y:py, v:p.v, m:p.m, name:d.name, color:d.color });
+    }
+  }
+  ctx.restore();
+
+  if (!vis.length){
+    ctx.fillStyle = C.empty; ctx.font = '13px ' + FONT_STACK;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(state.screen === 0
+      ? '按「加 ' + POUR_STEP + ' mL」開始注水，每一次都會描一個點'
+      : '填好左欄表格後按「加入圖表」',
+      (padL + W - padR) / 2, (padT + H - padB) / 2);
+  }
+}
+function drawAll(){ drawApBg(); drawApFg(); drawChart(); }
+
+/* ═══ 5. 互動：控制元件 ═══ */
+const el = {};
+for (const id of ['selLiquid','selCyl','boxRho','boxCyl','rhoSlider','cylSlider','rhoVal','cylVal',
+                  'chkTare','tareHint','chkFit','chkGrid','panelSim','panelExp','apStage',
+                  'simBtns','expBtns','expHint','btnAdd','btnEmpty','stepText','dsCount','dsList',
+                  'expName','chkIncl','expTable','btnAddRow','btnExpAdd','btnExpClear','tip',
+                  'btnClearAll','chart','chStage','apBg','apFg'])
+  el[id] = document.getElementById(id);
+
+// 下拉選項由資料表生成，避免選項與 LIQUIDS/CYLS 不同步
+function buildOptions(){
+  el.selLiquid.innerHTML = '';
+  for (const l of LIQUIDS){
+    const o = document.createElement('option');
+    o.value = l.id;
+    o.textContent = l.rho === null ? '自訂液體（滑桿調 D）'
+                  : l.name + '　D = ' + (l.unknown ? '？' : l.rho.toFixed(2));
+    el.selLiquid.appendChild(o);
+  }
+  el.selCyl.innerHTML = '';
+  for (const c of CYLS){
+    const o = document.createElement('option');
+    o.value = c.id;
+    o.textContent = c.m === null ? '自訂量筒（滑桿調 M）' : c.name + '　M = ' + c.m + ' g';
+    el.selCyl.appendChild(o);
+  }
+}
+
+function refreshFill(input){
+  const pct = (input.value - input.min) / (input.max - input.min) * 100;
+  input.style.setProperty('--fill', pct + '%');
+}
+
+// 實驗表格列由 state.expRows 生成，值改動即寫回 state
+function buildExpRows(){
+  for (const n of [...el.expTable.querySelectorAll('.inp')]) n.remove();
+  state.expRows.forEach((r, i) => {
+    for (const f of ['v','m']){
+      const inp = document.createElement('input');
+      inp.type = 'number'; inp.inputMode = 'decimal';
+      inp.className = 'inp num'; inp.value = r[f];
+      inp.dataset.i = i; inp.dataset.f = f;
+      inp.setAttribute('aria-label', (f === 'v' ? '第 ' + (i + 1) + ' 列體積' : '第 ' + (i + 1) + ' 列質量'));
+      if (f === 'm') inp.placeholder = '—';
+      el.expTable.appendChild(inp);
+    }
+  });
+}
+
+// 換液體、換量筒、改自訂數值都等於重做一次實驗：先倒空，圖上既有的線保留供對照
+function emptyCyl(){
+  state.curKey = null; state.tip = null; syncTip();
+  if (state.targetV > 0 || state.v > 0){ state.targetV = 0; startLoop(); }
+  syncUI(); drawApBg(); drawApFg();
+}
+el.selLiquid.addEventListener('change', e => { state.liquidId = e.target.value; emptyCyl(); });
+el.selCyl.addEventListener('change', e => { state.cylId = e.target.value; emptyCyl(); });
+el.rhoSlider.addEventListener('input', e => {
+  state.customRho = +(+e.target.value).toFixed(2); refreshFill(e.target); emptyCyl();
+});
+el.cylSlider.addEventListener('input', e => {
+  state.customCyl = +e.target.value; refreshFill(e.target); emptyCyl();
+});
+
+/* 去皮：把當前這組換算成另一組同時留在圖上，讓「含量筒」與「未含量筒」兩條線可以直接對照 */
+el.chkTare.addEventListener('change', e => {
+  const next = e.target.checked, cyl = cylMass();
+  const cur = state.datasets.find(d => d.key === state.curKey);
+  if (cur && cur.points.length && cyl > 0){
+    const nkey = [state.liquidId, rho().toFixed(2), next ? 'n' : 'y', cyl].join('|');
+    const conv = cur.points.map(p => ({ v:p.v, m: next ? p.m - cyl : p.m + cyl }));
+    const exist = state.datasets.find(d => d.key === nkey);
+    if (exist){ exist.points = conv; exist.visible = true; }
+    else if (state.datasets.length >= MAX_SETS){
+      // 放不下對照組：維持原狀並讓開關回彈，不要靜默地只改讀數
+      e.target.checked = state.tare;
+      return;
+    } else {
+      state.datasets.push({
+        id:++uid, key:nkey,
+        name: liqName() + (next ? '・未含量筒' : '・含量筒 ' + cyl + ' g'),
+        color:nextColor(), visible:true, points:conv
+      });
+    }
+    state.curKey = nkey;
+  } else state.curKey = null;
+  state.tare = next;
+  state.tip = null; syncTip();
+  renderDsList(); drawChart(); drawApFg(); syncUI();
+});
+
+el.chkFit.addEventListener('change', e => { state.showFit = e.target.checked; drawChart(); });
+el.chkGrid.addEventListener('change', e => { state.showGrid = e.target.checked; drawChart(); });
+el.expName.addEventListener('input', e => { state.expName = e.target.value; });
+el.chkIncl.addEventListener('change', e => { state.expIncl = e.target.checked; });
+el.expTable.addEventListener('input', e => {
+  const inp = e.target.closest('.inp'); if (!inp) return;
+  state.expRows[+inp.dataset.i][inp.dataset.f] = inp.value;
+  syncUI();
+});
+el.btnAddRow.addEventListener('click', () => {
+  if (state.expRows.length >= MAX_ROWS) return;
+  state.expRows.push({ v:'', m:'' });
+  buildExpRows(); syncUI();
+});
+el.btnExpClear.addEventListener('click', () => {
+  state.expRows = initState().expRows;
+  buildExpRows(); syncUI();
+});
+
+/* ── 模擬模式：注水與倒空 ── */
+el.btnAdd.addEventListener('click', () => {
+  const t = Math.min(MAX_V, state.targetV + POUR_STEP);
+  if (t <= state.targetV) return;
+  const key = runKey();
+  if (!state.datasets.some(d => d.key === key)){
+    if (state.datasets.length >= MAX_SETS) return;
+    state.datasets.push({
+      id:++uid, key, name:runName(), color:nextColor(), visible:true, points:[]
+    });
+    renderDsList();
+  }
+  state.curKey = key; state.targetV = t;
+  state.tip = null; syncTip();
+  syncUI(); startLoop();
+});
+el.btnEmpty.addEventListener('click', () => {
+  state.targetV = 0;
+  state.tip = null; syncTip();
+  syncUI(); startLoop();
+});
+
+/* ── 座標圖：點資料點看數值 ── */
+el.chart.addEventListener('pointerdown', e => {
+  const r = el.chart.getBoundingClientRect();
+  const x = e.clientX - r.left, y = e.clientY - r.top;
+  let best = null, bd = 15;   // 命中半徑放寬到 15px，手指才點得到
+  for (const q of ptPix){
+    const dd = Math.hypot(q.x - x, q.y - y);
+    if (dd < bd){ bd = dd; best = q; }
+  }
+  state.tip = best ? {
+    x:best.x, y:best.y, name:best.name, color:best.color,
+    text:'V = ' + best.v.toFixed(0) + ' mL　M = ' + best.m.toFixed(1) + ' g'
+  } : null;
+  syncTip();
+});
+
+/* ── 右欄：顯示／隱藏、刪除、清空 ── */
+el.dsList.addEventListener('click', e => {
+  const btn = e.target.closest('.ds-btn'); if (!btn) return;
+  const id = +btn.dataset.id;
+  if (btn.dataset.act === 'del'){
+    const gone = state.datasets.find(d => d.id === id);
+    state.datasets = state.datasets.filter(d => d.id !== id);
+    if (gone && gone.key === state.curKey) state.curKey = null;
+  } else {
+    const d = state.datasets.find(x => x.id === id);
+    if (d) d.visible = !d.visible;
+  }
+  state.tip = null; syncTip();
+  renderDsList(); drawChart(); syncUI();
+});
+el.btnClearAll.addEventListener('click', () => {
+  state.datasets = []; state.curKey = null;
+  state.tip = null; syncTip();
+  renderDsList(); drawChart(); syncUI();
+});
+
+/* ── 實驗模式：把表格數據畫成一條線 ── */
+el.btnExpAdd.addEventListener('click', () => {
+  const pts = state.expRows
+    .map(r => ({ v:parseFloat(r.v), m:parseFloat(r.m) }))
+    .filter(p => isFinite(p.v) && isFinite(p.m) && p.v >= 0)
+    .sort((a, b) => a.v - b.v);
+  if (pts.length < 2 || state.datasets.length >= MAX_SETS) return;
+  state.datasets.push({
+    id:++uid, key:'exp' + uid,
+    name:((state.expName || '實驗組').trim() || '實驗組') + (state.expIncl ? '・含量筒' : '・未含量筒'),
+    color:nextColor(), visible:true, points:pts
+  });
+  state.tip = null; syncTip();
+  renderDsList(); drawChart(); syncUI();
+});
+
+/* 右欄列表：只在資料組增刪或顯隱變動時重建，不隨每幀動畫重畫 */
+function renderDsList(){
+  el.dsList.innerHTML = '';
+  if (!state.datasets.length){
+    const p = document.createElement('div');
+    p.className = 'ds-empty';
+    p.textContent = state.screen === 0
+      ? '按「加 ' + POUR_STEP + ' mL」開始注水，每加一次就描一個點。'
+      : '填好左欄表格後按「加入圖表」。';
+    el.dsList.appendChild(p);
+    return;
+  }
+  for (const d of state.datasets){
+    const row = document.createElement('div');
+    row.className = 'ds-row' + (d.visible ? '' : ' off');
+    const dot = document.createElement('span');
+    dot.className = 'ds-dot'; dot.style.background = d.color;
+    const nm = document.createElement('span');
+    nm.className = 'ds-name'; nm.textContent = d.name;
+    const eye = document.createElement('button');
+    eye.className = 'ds-btn'; eye.dataset.id = d.id; eye.dataset.act = 'vis';
+    eye.setAttribute('aria-label', (d.visible ? '隱藏 ' : '顯示 ') + d.name);
+    eye.innerHTML = '<i class="fa-solid ' + (d.visible ? 'fa-eye' : 'fa-eye-slash') + '"></i>';
+    const del = document.createElement('button');
+    del.className = 'ds-btn del'; del.dataset.id = d.id; del.dataset.act = 'del';
+    del.setAttribute('aria-label', '刪除 ' + d.name);
+    del.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+    row.append(dot, nm, eye, del);
+    el.dsList.appendChild(row);
+  }
+}
+
+// 提示卡疊在 canvas 上（DEV_SPEC 4.4：能放 HTML 就不要畫進 canvas）
+function syncTip(){
+  const t = state.tip;
+  el.tip.hidden = !t;
+  if (!t) return;
+  el.tip.style.left = t.x + 'px';
+  el.tip.style.top = t.y + 'px';
+  el.tip.innerHTML = '';
+  const nm = document.createElement('span');
+  nm.className = 'nm'; nm.style.color = t.color; nm.textContent = t.name;
+  el.tip.append(nm, document.createElement('br'), document.createTextNode(t.text));
+}
+
+/* 把 state 寫回 DOM：所有條件顯示與禁用態集中在這裡，不散落在各事件裡 */
+function syncUI(){
+  const isSim = state.screen === 0;
+  el.panelSim.hidden = !isSim;
+  el.panelExp.hidden = isSim;
+  el.apStage.hidden = !isSim;
+  el.simBtns.hidden = !isSim;
+  el.expBtns.hidden = isSim;
+  el.expHint.hidden = isSim;
+
+  el.selLiquid.value = state.liquidId;
+  el.selCyl.value = state.cylId;
+  el.boxRho.hidden = state.liquidId !== 'custom';
+  el.boxCyl.hidden = state.cylId !== 'custom';
+  el.rhoVal.textContent = state.customRho.toFixed(2);
+  el.cylVal.textContent = String(state.customCyl);
+  el.tareHint.textContent = state.tare ? '讀數不含量筒 → 線過原點' : '讀數含量筒 → 線有截距';
+  el.stepText.textContent = String(POUR_STEP);
+
+  const full = state.datasets.length >= MAX_SETS;
+  el.dsCount.textContent = state.datasets.length + '/' + MAX_SETS;
+  el.dsCount.classList.toggle('full', full);
+
+  // 訊息條不做，邊界情境改用禁用態表達：加滿、或已 5 組且這條線還不在圖上
+  el.btnAdd.disabled = state.targetV >= MAX_V || (full && !state.datasets.some(d => d.key === runKey()));
+  el.btnEmpty.disabled = state.targetV <= 0;
+  el.btnAddRow.disabled = state.expRows.length >= MAX_ROWS;
+  el.btnExpAdd.disabled = full || countExpPoints() < 2;
+}
+// 有效資料列：體積與質量都填了合法數字才算
+function countExpPoints(){
+  return state.expRows.filter(r => {
+    const v = parseFloat(r.v), m = parseFloat(r.m);
+    return isFinite(v) && isFinite(m) && v >= 0;
+  }).length;
+}
+
+/* ═══ 6. 動畫迴圈（DEV_SPEC 6.2 骨架） ═══ */
+let running = false, wasRunning = false, last = 0, rafId = 0;
+function loop(ts){
+  if (!running) return;
+  const dt = Math.min((ts - last) / 1000, 0.05);   // 鉗 50ms：切分頁回來不跳格
+  last = ts;
+  const landed = update(dt);
+  if (landed){ commit(state.v); drawChart(); syncUI(); }
+  drawApFg();
+  // 水位到定位就收工，靜止時不空轉 rAF
+  if (Math.abs(state.v - state.targetV) < 0.001){ stopLoop(); return; }
+  rafId = requestAnimationFrame(loop);
+}
+function startLoop(){
+  if (running) return;
+  running = true; last = performance.now();
+  rafId = requestAnimationFrame(loop);
+}
+function stopLoop(){ running = false; cancelAnimationFrame(rafId); }
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden){ wasRunning = running; stopLoop(); }
+  else if (wasRunning){ wasRunning = false; startLoop(); }
+});
+
+/* ═══ 7. 初始化 ═══ */
+// 畫布尺寸與 DPR（DEV_SPEC 6.1）：高 DPR 平板鉗 2，之後一律用 CSS px 座標
+function fitCanvas(canvas){
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const r = canvas.getBoundingClientRect();
+  const w = Math.round(r.width * dpr), h = Math.round(r.height * dpr);
+  const ctx = canvas.getContext('2d');
+  // 只在尺寸真的變了才重設：寫 canvas.width 會清空整張畫布
+  if (canvas.width !== w || canvas.height !== h){ canvas.width = w; canvas.height = h; }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return ctx;
+}
+function fitAll(){
+  if (!el.apStage.hidden){
+    const r = el.apStage.getBoundingClientRect();
+    if (r.width > 0 && r.height > 0){
+      apBgCtx = fitCanvas(el.apBg);
+      apFgCtx = fitCanvas(el.apFg);
+      geo = calcGeo(r.width, r.height);
+    }
+  }
+  const cr = el.chStage.getBoundingClientRect();
+  if (cr.width > 0 && cr.height > 0){
+    size.ch = { w:cr.width, h:cr.height };
+    chCtx = fitCanvas(el.chart);
+  }
+}
+// 旋轉、分割畫面、面板開闔都靠這裡重算，不監聽 orientationchange
+new ResizeObserver(() => { fitAll(); drawAll(); }).observe(el.apStage);
+new ResizeObserver(() => { fitAll(); drawChart(); }).observe(el.chStage);
+
+// 分頁切換（單一 html 內以 hidden 切換，不做多頁）
+document.getElementById('nav').addEventListener('click', e => {
+  const tab = e.target.closest('.navtab'); if (!tab) return;
+  const n = +tab.dataset.screen;
+  if (n === state.screen) return;
+  state.screen = n;
+  state.tip = null; syncTip();
+  for (const t of document.querySelectorAll('.navtab')) t.setAttribute('aria-selected', t === tab);
+  document.body.classList.remove('show-settings', 'show-data');
+  syncSheetTabs();
+  syncUI();
+  renderDsList();
+  fitAll(); drawAll();
+});
+
+// <900px：設定 / 數據以浮出面板呈現，兩者互斥
+function syncSheetTabs(){
+  document.getElementById('tabSettings').setAttribute('aria-pressed', document.body.classList.contains('show-settings'));
+  document.getElementById('tabData').setAttribute('aria-pressed', document.body.classList.contains('show-data'));
+}
+function bindSheet(btnId, cls, otherCls){
+  document.getElementById(btnId).addEventListener('click', () => {
+    document.body.classList.remove(otherCls);
+    document.body.classList.toggle(cls);
+    syncSheetTabs();
+  });
+}
+bindSheet('tabSettings', 'show-settings', 'show-data');
+bindSheet('tabData', 'show-data', 'show-settings');
+
+// 全螢幕：API 不存在就把按鈕藏起來，不留無效按鈕
+const appEl = document.getElementById('app');
+const fullBtn = document.getElementById('btnFull');
+if (appEl.requestFullscreen || appEl.webkitRequestFullscreen){
+  fullBtn.addEventListener('click', () => {
+    if (document.fullscreenElement || document.webkitFullscreenElement){
+      (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    } else {
+      (appEl.requestFullscreen || appEl.webkitRequestFullscreen).call(appEl);
+    }
+  });
+} else fullBtn.hidden = true;
+
+// 說明彈窗
+const helpModal = document.getElementById('helpModal');
+document.getElementById('btnHelp').addEventListener('click', () => helpModal.classList.add('open'));
+document.getElementById('btnCloseHelp').addEventListener('click', () => helpModal.classList.remove('open'));
+helpModal.addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('open'); });
+
+buildOptions();
+buildExpRows();
+for (const input of document.querySelectorAll('input[type="range"]')) refreshFill(input);
+renderDsList();
+syncUI();
+fitAll();
+drawAll();
+</script>
+</body>
+</html>

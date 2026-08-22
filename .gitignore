@@ -1,0 +1,7 @@
+# Claude Design 設計稿與其 React runtime：本機視覺參考，不進版控
+# （母倉 .gitignore 註明設計稿該由各模擬自己排除；motion-graphs-sim 同樣做法）
+# 本專案的稿還散在根目錄、尚未收進 design_handoff/，所以逐檔列出。
+Canvas.dc.html
+DensityVolumeLab.dc.html
+support.js
+design_handoff/
