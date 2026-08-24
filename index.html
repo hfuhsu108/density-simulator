@@ -23,13 +23,16 @@
   --c-bg:#F6F7F9;
   --c-surface:#FFFFFF;
   --c-bd:#E2E5EA;
-  --c-bd-ctl:#CFD5DD;
+  /* 控制項邊框：原 #CFD5DD 在白底只有 1.48:1，遠低於「非文字元素 ≥3:1」，
+     學生看不出輸入框與開關是可操作的元件。加深至 3.10:1（DESIGN_SPEC 第 2 節） */
+  --c-bd-ctl:#8A93A1;
   --c-bd-soft:#EEF0F3;
   --c-text:#1C2433;
   --c-text-2:#445062;
   --c-text-3:#7A8496;
   --c-ok:#2F9E63;
-  --c-warn:#D64545;
+  /* 警示紅：原 #D64545 為 4.38:1，未達文字門檻 4.5。加深至 5.46:1 */
+  --c-warn:#C62F2F;
   --c-disabled:#B9C0CF;
 }
 
@@ -73,7 +76,8 @@ button:not(:disabled):active,.chip:active,label.check:active,label.switch:active
 .topbar{height:50px;flex:none;display:flex;align-items:center;gap:12px;padding:0 18px;background:var(--c-surface);border-bottom:1px solid var(--c-bd)}
 .logo{width:28px;height:28px;border-radius:7px;background:var(--c-primary);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex:none}
 .title{font-size:calc(17px * var(--u));font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.topbar .actions{margin-left:auto;display:flex;gap:8px}
+/* gap 需 ≥10px：兩顆 34px 圖示鈕的 44px 命中盒各向外溢出 5px，gap:8 會讓它們互相重疊 */
+.topbar .actions{margin-left:auto;display:flex;gap:12px}
 .icon-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--c-bd-ctl);background:var(--c-surface);display:flex;align-items:center;justify-content:center;color:var(--c-text-2);font-size:14px}
 
 main{flex:1;position:relative;display:grid;grid-template-columns:1fr 2fr 1fr;gap:12px;padding:12px 14px 0;min-height:0}
@@ -92,6 +96,7 @@ main{flex:1;position:relative;display:grid;grid-template-columns:1fr 2fr 1fr;gap
 /* 資料點提示：canvas 畫圖、DOM 顯示提示，文字才不會被 DPR 影響 */
 .tip{position:absolute;pointer-events:none;transform:translate(-50%,-128%);background:var(--c-surface);border:1px solid var(--c-primary-soft-bd);border-radius:8px;padding:5px 9px;font-size:calc(12px * var(--u));font-variant-numeric:tabular-nums;box-shadow:0 4px 12px rgba(28,36,51,.14);white-space:nowrap}
 .tip .nm{font-weight:700}
+.tip .tip-sw{display:inline-block;width:.72em;height:.72em;border-radius:50%;margin-right:5px}
 
 /* 右欄：圖上的數據組 */
 .datacol{background:var(--c-surface);border:1px solid var(--c-bd);border-radius:10px;padding:10px 10px 6px;display:flex;flex-direction:column;gap:6px;min-width:0;overflow:hidden}
@@ -100,18 +105,28 @@ main{flex:1;position:relative;display:grid;grid-template-columns:1fr 2fr 1fr;gap
 .ds-head h2{white-space:nowrap}
 .ds-count{color:var(--c-text-2);font-weight:400}
 .ds-count.full{color:var(--c-warn);font-weight:700}
-.ds-list{flex:1;overflow-y:auto;min-height:0}
+/* 右內距留給刪除鈕的 44px 命中盒：它比視覺寬度多溢出 4px，
+   而 overflow-y:auto 會讓 overflow-x 的計算值也變 auto，溢出的部分會被裁掉 */
+.ds-list{flex:1;overflow-y:auto;min-height:0;padding-right:4px}
 .ds-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--c-bd-soft)}
-.ds-row.off{opacity:.42}
-.ds-dot{width:calc(18px * var(--u));height:calc(18px * var(--u));border-radius:50%;flex:none;
-  display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;
-  font-size:calc(11px * var(--u));line-height:1}
+/* 隱藏態只淡化色點與名稱，不淡化按鈕——整列 opacity:.42 會讓名稱掉到 2.04:1、
+   圖示掉到 1.63:1，而學生正是要讀出名稱才知道該點哪一顆眼睛把它叫回來 */
+.ds-row.off .ds-dot,.ds-row.off .ds-name{opacity:.65}
+.ds-row.off .ds-name{color:var(--c-text)}
+/* 白底＋彩色粗環＋深色字：彩底白字在綠/橘/紫/青上只有 3.4–4.3:1，
+   而代號正是投影把顏色洗掉之後唯一的區辨依據，它必須先自己讀得清楚（與圖上的代號圓同一套做法） */
+.ds-dot{width:calc(19px * var(--u));height:calc(19px * var(--u));border-radius:50%;flex:none;
+  display:flex;align-items:center;justify-content:center;background:#fff;
+  border:2.5px solid var(--c-bd);color:var(--c-text);font-weight:700;
+  font-size:calc(11.5px * var(--u));line-height:1}
 .ds-name{flex:1;font-size:calc(12.5px * var(--u));font-weight:700;line-height:1.3;min-width:0;overflow-wrap:anywhere}
 .ds-btn{width:36px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--c-text-3);font-size:13px;flex:none}
+/* 顯示／隱藏與刪除相鄰，36+8 的間距讓兩個 44px 命中盒零死區貼合——右邊那顆是刪除，
+   誤觸代價不對稱，額外拉開到 50px */
+.ds-btn+.ds-btn{margin-left:6px}
 .ds-empty{font-size:calc(12.5px * var(--u));color:var(--c-text-2);padding:8px 2px;line-height:1.5}
 
 .drawer{flex:none;margin:12px 14px;background:var(--c-surface);border:1px solid var(--c-bd);border-radius:12px;padding:8px 18px 10px;box-shadow:0 -4px 12px rgba(28,36,51,.05)}
-.drawer .handle{width:44px;height:5px;border-radius:3px;background:#D7DBE2;margin:0 auto 8px}
 .drawer .row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .btns{display:flex;gap:8px;flex:none}
 .drawer .hint{font-size:calc(12.5px * var(--u));color:var(--c-text-2)}
@@ -120,7 +135,6 @@ main{flex:1;position:relative;display:grid;grid-template-columns:1fr 2fr 1fr;gap
 .bottomnav{height:56px;flex:none;display:flex;align-items:center;padding:0 18px;background:var(--c-nav);gap:6px}
 .navtab{white-space:nowrap;flex:none;height:38px;padding:0 18px;border-radius:8px;color:var(--c-nav-idle);font-size:calc(13.5px * var(--u));display:flex;align-items:center}
 .navtab[aria-selected="true"]{background:var(--c-primary);color:#fff;font-weight:700}
-.nav-note{margin-left:auto;font-size:calc(12px * var(--u));color:var(--c-nav-idle)}
 
 /* ═══ 4. 元件（../_shared/design/components-spec.html） ═══ */
 .field{display:flex;flex-direction:column;gap:6px}
@@ -130,12 +144,15 @@ main{flex:1;position:relative;display:grid;grid-template-columns:1fr 2fr 1fr;gap
 .inp{height:44px;border-radius:10px;border:1px solid var(--c-bd-ctl);background:var(--c-surface);padding:0 10px;font-size:calc(16px * var(--u));color:var(--c-text);width:100%}
 .inp:focus{border-color:var(--c-primary);outline:none;box-shadow:0 0 0 3px rgba(42,111,219,.15)}
 .inp.num{font-variant-numeric:tabular-nums;border-radius:8px;padding:0 8px}
+/* 沒被畫上去的列：紅框只是第二條通道，狀態列會另外點名是第幾列——
+   表格沒有列號，光靠顏色學生數不出來自己漏了哪一格 */
+.inp.miss{border-color:var(--c-warn);box-shadow:0 0 0 2px rgba(198,47,47,.16)}
 
 .btn{height:44px;padding:0 18px;border-radius:10px;background:var(--c-surface);border:1px solid var(--c-bd-ctl);color:var(--c-text-2);font-size:calc(14px * var(--u));display:flex;align-items:center;gap:8px;white-space:nowrap}
 .btn.primary{background:var(--c-primary);border-color:var(--c-primary);color:#fff;font-weight:700}
 .btn:disabled{cursor:default;background:var(--c-bg);border-color:var(--c-bd);color:var(--c-disabled)}
 .btn.primary:disabled{background:var(--c-disabled);border-color:var(--c-disabled);color:#fff}
-.btn-dash{height:40px;border-radius:8px;border:1px dashed var(--c-bd-ctl);color:var(--c-text-2);font-size:calc(13px * var(--u));display:flex;align-items:center;justify-content:center;gap:6px;width:100%}
+.btn-dash{height:44px;border-radius:8px;border:1px dashed var(--c-bd-ctl);color:var(--c-text-2);font-size:calc(13px * var(--u));display:flex;align-items:center;justify-content:center;gap:6px;width:100%}
 .btn-dash:disabled{cursor:default;color:var(--c-disabled);border-color:var(--c-bd)}
 .link-btn{font-size:calc(12px * var(--u));color:var(--c-text-2);height:32px;padding:0 6px;white-space:nowrap;flex:none}
 
@@ -144,8 +161,8 @@ main{flex:1;position:relative;display:grid;grid-template-columns:1fr 2fr 1fr;gap
 
 /* DESIGN_SPEC 給的視覺尺寸（icon 鈕 34px、分頁 38px）小於鐵律 6 的 44px：
    比照滑桿把手的處理，視覺尺寸不動，用透明區把感應範圍補到 44px */
-.icon-btn,.link-btn,.navtab,.chip,.ds-btn{position:relative}
-.icon-btn::after,.link-btn::after,.navtab::after,.chip::after,.ds-btn::after{
+.icon-btn,.link-btn,.navtab,.chip,.ds-btn,.row-del{position:relative}
+.icon-btn::after,.link-btn::after,.navtab::after,.chip::after,.ds-btn::after,.row-del::after{
   content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
   width:max(100%,44px);height:max(100%,44px);
 }
@@ -168,6 +185,13 @@ label.check .box{width:22px;height:22px;border-radius:6px;border:1.5px solid var
 label.check input:checked+.box{background:var(--c-primary);border-color:var(--c-primary)}
 label.check .box i{visibility:hidden}
 label.check input:checked+.box i{visibility:visible}
+label.check .sub{font-size:calc(11.5px * var(--u));color:var(--c-text-2);display:block}
+/* 從屬勾選項：方程式是那條直線的算式，沒有線就沒有方程式。縮排表示層級。
+   鎖定態只把方框變灰，文字維持 --c-text-2（8.17:1）不跟著淡化——
+   「要先打開上面的『顯示直線』」這行字正是學生此刻最需要讀到的一句，
+   把它調成灰的等於用對比度懲罰唯一的解釋（DESIGN_SPEC 第 2 節） */
+label.check.sub-of{margin-left:30px}
+label.check.locked .box{border-color:var(--c-disabled);background:var(--c-bd-soft)}
 
 label.switch{display:flex;align-items:center;gap:10px;font-size:calc(13px * var(--u));color:var(--c-text-2);min-height:44px;line-height:1.3}
 label.switch input{position:absolute;opacity:0;width:0;height:0}
@@ -178,8 +202,10 @@ label.switch input:checked+.track::after{left:25px}
 label.switch .sub{font-size:calc(11.5px * var(--u));color:var(--c-text-2);display:block}
 
 /* 實驗數據表格 */
-.exp-table{display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:center}
+.exp-table{display:grid;grid-template-columns:1fr 1fr 34px;gap:6px;align-items:center}
 .exp-table .th{font-size:calc(12.5px * var(--u));color:var(--c-text-2);font-weight:700}
+/* 每列的刪除鈕：視覺 34×44，命中盒由下方的 ::after 補到 44×44 */
+.row-del{width:34px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--c-text-2);font-size:13px}
 /* 邊界情境的說明文字：不可用 disabled 色（DESIGN_SPEC 第 2 節，#CFD5DD 對比只有 1.38:1） */
 .status{font-size:calc(12.5px * var(--u));color:var(--c-warn);font-weight:700;line-height:1.35;flex:1;min-width:140px}
 .note{font-size:calc(12px * var(--u));color:var(--c-text-2);margin:0;line-height:1.5}
@@ -259,13 +285,14 @@ label.switch .sub{font-size:calc(11.5px * var(--u));color:var(--c-text-2);displa
 
       <label class="switch">
         <input type="checkbox" id="chkTare"><span class="track"></span>
-        <span>天秤歸零（去皮）<span class="sub" id="tareHint">讀數含量筒 → 線有截距</span></span>
+        <span>天秤歸零<span class="sub" id="tareHint">現在的讀數包含量筒本身的重量</span></span>
       </label>
       <label class="check">
-        <input type="checkbox" id="chkFit" checked><span class="box"><i class="fa-solid fa-check"></i></span>顯示直線與截距
+        <input type="checkbox" id="chkFit"><span class="box"><i class="fa-solid fa-check"></i></span>顯示直線
       </label>
-      <label class="check">
-        <input type="checkbox" id="chkGrid" checked><span class="box"><i class="fa-solid fa-check"></i></span>顯示格線
+      <label class="check sub-of locked" id="labEq">
+        <input type="checkbox" id="chkEq" disabled><span class="box"><i class="fa-solid fa-check"></i></span>
+        <span>顯示方程式<span class="sub" id="eqHint">要先打開上面的「顯示直線」</span></span>
       </label>
     </section>
 
@@ -277,14 +304,16 @@ label.switch .sub{font-size:calc(11.5px * var(--u));color:var(--c-text-2);displa
         <input type="text" class="inp" id="expName" placeholder="例：自來水" aria-label="這組數據的名稱">
       </div>
       <label class="check">
-        <input type="checkbox" id="chkIncl" checked><span class="box"><i class="fa-solid fa-check"></i></span>質量含量筒（沒有去皮）
+        <input type="checkbox" id="chkIncl" checked><span class="box"><i class="fa-solid fa-check"></i></span>質量含量筒（天秤沒有歸零）
       </label>
       <div class="exp-table" id="expTable">
         <span class="th">體積 V (mL)</span>
         <span class="th">質量 M (g)</span>
+        <span class="th"></span>
       </div>
       <button class="btn-dash" id="btnAddRow"><i class="fa-solid fa-plus"></i>新增一列</button>
-      <p class="note">量完一組（至少兩列）後，按下方「加入圖表」，就會用最小平方法畫出這組的直線。</p>
+      <!-- 這行字由 syncUI() 隨階段改寫，初始值必須與 syncUI 的「尚未連結」分支一字不差 -->
+      <p class="note" id="expNote">填好至少兩列，按下方「加入圖表」。填錯整列可以按右邊的 ✕ 刪掉。</p>
     </section>
 
     <!-- 中欄：器材舞台（僅模擬模式）＋座標圖 -->
@@ -304,8 +333,8 @@ label.switch .sub{font-size:calc(11.5px * var(--u));color:var(--c-text-2);displa
     <!-- 右欄：圖上的數據組 -->
     <section class="datacol" id="panelData">
       <div class="ds-head">
-        <h2>圖上的數據組 <span class="ds-count num-val" id="dsCount">0/5</span></h2>
-        <button class="link-btn" id="btnClearAll">清空</button>
+        <h2>圖上的線 <span class="ds-count num-val" id="dsCount"></span></h2>
+        <button class="link-btn" id="btnClearAll">清掉全部的線</button>
       </div>
       <div class="ds-list" id="dsList"></div>
     </section>
@@ -313,21 +342,20 @@ label.switch .sub{font-size:calc(11.5px * var(--u));color:var(--c-text-2);displa
 
   <!-- 底部抽屜：本模式的主要動作 -->
   <div class="drawer">
-    <div class="handle"></div>
     <div class="row">
       <div class="btns" id="simBtns">
         <button class="btn primary" id="btnAdd"><i class="fa-solid fa-droplet"></i>加 <span class="num-val" id="stepText">10</span> mL</button>
         <button class="btn" id="btnEmpty"><i class="fa-solid fa-droplet-slash"></i>倒空量筒</button>
       </div>
       <div class="btns" id="expBtns" hidden>
-        <button class="btn primary" id="btnExpAdd"><i class="fa-solid fa-chart-line"></i>加入圖表</button>
-        <button class="btn" id="btnExpClear">清空表格</button>
+        <button class="btn primary" id="btnExpAdd"><i class="fa-solid fa-chart-line"></i><span id="expAddText">加入圖表</span></button>
+        <button class="btn" id="btnExpClear">清空表格，換下一組</button>
       </div>
       <button class="btn" id="btnReset"><i class="fa-solid fa-rotate-left"></i>全部重置</button>
-      <span class="hint" id="expHint" hidden>在左欄填入實際量到的體積與質量，可自訂體積值。</span>
       <span class="status" id="status" hidden></span>
       <div class="mobile-tabs">
-        <button class="chip" id="tabSettings" aria-pressed="false"><i class="fa-solid fa-gear"></i>設定</button>
+        <!-- 文字與圖示由 syncUI() 隨模式改寫：實驗模式時這顆打開的是數據輸入表格，不是設定 -->
+        <button class="chip" id="tabSettings" aria-pressed="false"><i class="fa-solid fa-gear" id="tabSettingsIcon"></i><span id="tabSettingsText">設定</span></button>
         <button class="chip" id="tabData" aria-pressed="false"><i class="fa-solid fa-chart-simple"></i>數據</button>
       </div>
     </div>
@@ -337,7 +365,6 @@ label.switch .sub{font-size:calc(11.5px * var(--u));color:var(--c-text-2);displa
   <nav class="bottomnav" id="nav">
     <button class="navtab" data-screen="0" aria-selected="true">模擬模式</button>
     <button class="navtab" data-screen="1" aria-selected="false">實驗模式</button>
-    <span class="nav-note">體積與質量的關係</span>
   </nav>
 </div>
 
@@ -346,8 +373,9 @@ label.switch .sub{font-size:calc(11.5px * var(--u));color:var(--c-text-2);displa
   <div class="box">
     <h3>怎麼用</h3>
     <p>「模擬模式」選好液體與量筒，按 <b>加 10 mL</b> 逐次注水；每次水位停穩，圖上就多一個點。「實驗模式」把真實量到的數字填進左欄表格，再按<b>加入圖表</b>。</p>
-    <p>直線公式：M = D × V + M<sub>量筒</sub>（M 質量、V 體積、D 密度）。<b>斜率就是液體密度 D</b>，<b>截距就是量筒質量 M</b>。打開「天秤歸零（去皮）」等於扣掉量筒，線就會通過原點。</p>
-    <p>同一種液體換不同量筒 → 兩條線<b>平行</b>；換密度不同的液體 → <b>斜率</b>改變，密度愈大線愈陡。圖上最多同時放 5 組。</p>
+    <p>直線公式：M = D × V + M<sub>量筒</sub>（M 質量、V 體積、D 密度）。<b>斜率就是液體密度 D</b>，<b>截距就是量筒質量 M<sub>量筒</sub></b>。打開「天秤歸零」等於扣掉量筒的重量，線就會通過原點。</p>
+    <p>左欄的「顯示直線」會把每組資料配一條直線；再勾「顯示方程式」就會標出那條線的算式，可以直接對照斜率與截距。</p>
+    <p>圖上最多同時放 5 條線，可以互相比較。</p>
     <button class="btn primary" id="btnCloseHelp" style="margin-left:auto">關閉</button>
   </div>
 </div>
@@ -390,7 +418,7 @@ const C = {
   // 刻度數字 #7A8496 實測 3.77:1（未達文字門檻 4.5）、軸線 #CFD5DD 只有 1.48:1、
   // 空狀態提示 #9AA3B2 只有 2.54:1 —— 三者都承載資訊，一律加深（DESIGN_SPEC 第 2 節）
   lcd:'#1C2433', ok:'#2F9E63', grid:'#EEF1F5', axis:'#7A8496', tick:'#445062', axisLabel:'#445062', empty:'#445062',
-  out:'#D64545'   // 出界標記
+  out:'#C62F2F'   // 出界標記（與 --c-warn 同步加深到 5.46:1）
 };
 // 座標軸固定範圍（DESIGN_SPEC 第 7 節：軸一律固定，不隨資料縮放）。
 // 軸會動的話，加入第二組液體時第一條線的視覺陡度就變了，「密度愈大線愈陡」在畫面上驗證不了。
@@ -416,9 +444,16 @@ function initState(){
     targetV:0,                // 注水目標水位
     pouring:false,            // 正在注水（決定要不要畫水流）
     datasets:[], curKey:null,
-    showFit:true, showGrid:true,
+    /* 直線預設不畫：學生要先看見一堆散點、自己判斷「這些點排成一直線」，
+       線一開始就畫好等於先給答案。方程式從屬於直線，一併預設關 */
+    showFit:false, showEq:false, showGrid:true,
     tip:null,
     expName:'', expIncl:true,
+    // 上次加入／更新時沒被畫上去的列號（1-based），供表格標紅。學生一改那一列就清掉
+    expSkipped:[],
+    // 目前表格對應到圖上的哪一條線（實驗模式）。有值時「加入圖表」變成「更新圖上的線」，
+    // 學生改完打錯的數字直接更新那一條，不會多長出一條錯的留在圖上
+    expLinkId:null,
     expRows:[{v:10,m:''},{v:20,m:''},{v:30,m:''},{v:40,m:''},{v:50,m:''}]
   };
 }
@@ -432,32 +467,40 @@ function rho(){ const l = liquid(); return l.rho === null ? state.customRho : l.
 function cylDef(){ return CYLS.find(c => c.id === state.cylId) || CYLS[0]; }
 function cylMass(){ const c = cylDef(); return c.m === null ? state.customCyl : c.m; }
 function liqName(){ const l = liquid(); return l.rho === null ? '自訂 D ' + rho().toFixed(DEC.rho) : l.name; }
-// 同一組「液體＋密度＋去皮與否＋量筒質量」的注水視為同一條線，續用不新增
+// 同一組「液體＋密度＋天秤有沒有歸零＋量筒質量」的注水視為同一條線，續用不新增
 // 這裡的 toFixed(2) 是 key 的正規化，不是顯示位數，所以刻意不走 DEC
 function runKey(){ return [state.liquidId, rho().toFixed(2), state.tare ? 'n' : 'y', cylMass()].join('|'); }
-function runName(){ return liqName() + (state.tare ? '・未含量筒' : '・含量筒 ' + cylMass() + ' g'); }
+// 「水・未含量筒」的中黑點加雙重否定讀起來像資料庫欄位，對國中生改用括號與正面說法
+function runName(){ return liqName() + (state.tare ? '（已扣掉量筒）' : '（含量筒 ' + cylMass() + ' g）'); }
 // 顏色與代號同一個槽位——右欄的「A」與圖上的「A」必須永遠是同一組
 function nextSlot(){
   const i = SERIES.findIndex((c, k) => !state.datasets.some(d => d.slot === k));
   const k = i < 0 ? 0 : i;
   return { slot:k, color:SERIES[k], label:LABELS[k] };
 }
-// 天秤讀數：M = D × V ＋ 量筒質量（去皮則不含量筒）
+// 天秤讀數：M = D × V ＋ 量筒質量（天秤歸零後不含量筒）
 function massAt(v){ return rho() * v + (state.tare ? 0 : cylMass()); }
 
-// 水位朝目標逼近；回傳 true 表示這一幀剛注滿到定位，該落一個資料點
+/* 水位朝目標逼近；回傳這一幀「跨過或抵達」的取樣刻度清單。
+   不能只在抵達 targetV 的那一幀落一個點：學生一定會連按「加 10 mL」，
+   targetV 會一次從 0 跳到 50，中間的 10/20/30/40 全部被吃掉，圖上只剩一個孤點、畫不出直線。
+   按鈕改成注水中禁用也能解，但那樣手感更差——連按本來就是合理操作 */
 function update(dt){
-  const t = state.targetV;
+  const t = state.targetV, from = state.v;
+  const landed = [];
   if (state.v < t - 0.001){
     state.pouring = true;
     state.v = Math.min(t, state.v + POUR_RATE * dt);
-    if (state.v >= t - 0.001){ state.v = t; state.pouring = false; return true; }
+    if (state.v >= t - 0.001){ state.v = t; state.pouring = false; }
+    for (let k = Math.floor(from / POUR_STEP) + 1; k * POUR_STEP <= state.v + 0.001; k++){
+      landed.push(k * POUR_STEP);
+    }
   } else if (state.v > t + 0.001){
     // 倒空比注水快，否則學生每次重來都要等
     state.pouring = false;
     state.v = Math.max(t, state.v - POUR_RATE * 2.4 * dt);
   }
-  return false;
+  return landed;
 }
 // 落點：同一體積重複量到就覆蓋，不堆疊成兩點
 function commit(v){
@@ -477,6 +520,14 @@ function fit2(pts){
   let b = (sy - a * sx) / n;
   if (Math.abs(b) < 0.05) b = 0;
   return { a, b };
+}
+/* 方程式文字。位數不是隨便取的：斜率就是密度，取 2 位（與液體選單的「D = 1.00」同位數）；
+   截距就是量筒質量，取 1 位（與天秤讀數同位數）。兩邊位數對得上，
+   學生才能把線上的數字和畫面其他地方的數字連起來。截距為 0 時整項不寫，線就是通過原點 */
+function eqText(f){
+  const a = f.a.toFixed(DEC.rho);
+  if (!f.b) return 'M = ' + a + ' × V';
+  return 'M = ' + a + ' × V ' + (f.b > 0 ? '+' : '−') + ' ' + Math.abs(f.b).toFixed(DEC.mass);
 }
 
 /* ═══ 4. 繪製：讀 state 畫畫面，不改 state ═══ */
@@ -531,11 +582,14 @@ function drawApBg(){
   ctx.restore();
 
   ctx.strokeStyle = C.line; ctx.lineWidth = 2 * U;
-  ctx.font = (11 * U) + 'px ' + FONT_STACK; ctx.fillStyle = C.line;
+  // 刻度數字是文字（門檻 4.5），C.line 疊在玻璃上只有 4.39:1，改用較深的 C.tick
+  ctx.font = (11 * U) + 'px ' + FONT_STACK; ctx.fillStyle = C.tick;
   ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
   // 量筒矮的時候只標偶數刻度，避免數字疊在一起
   const labelEvery = (g.innerBot - g.innerTop) / (CAP / 10) < 15 * U ? 20 : 10;
-  for (let v = 10; v <= CAP; v += 10){
+  // 刻度只畫到注水上限。CAP 是筒身容量（頂端留白用），畫到 CAP 會出現一格 60 mL 的刻度，
+  // 但按鈕在 50 就停了——畫面上看得到卻加不到，學生只會以為程式壞了
+  for (let v = 10; v <= MAX_V; v += 10){
     const y = yForV(v);
     if (y < g.cylTop + 6 * U) break;
     ctx.beginPath();
@@ -596,23 +650,25 @@ function drawApFg(){
   ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
   ctx.fillText(massAt(v).toFixed(DEC.mass) + ' g', dx + dw - 8 * U, dy + dh / 2 + 1);
   if (state.tare){
-    ctx.font = '700 ' + (9 * U) + 'px ' + FONT_STACK; ctx.fillStyle = C.ok; ctx.textAlign = 'left';
-    ctx.fillText('TARE', dx + 7 * U, dy + dh / 2 + 1);
+    // 原為 9px 的英文縮寫 TARE：全頁最小的字，卻承載「天秤有沒有歸零」這個關鍵狀態
+    ctx.font = '700 ' + (12 * U) + 'px ' + FONT_STACK; ctx.fillStyle = C.ok; ctx.textAlign = 'left';
+    ctx.fillText('已歸零', dx + 7 * U, dy + dh / 2 + 1);
   }
-  ctx.beginPath(); ctx.arc(g.balX + g.balW - 16 * U, g.balTop + g.balH / 2, 4 * U, 0, Math.PI * 2);
-  ctx.fillStyle = C.ok; ctx.fill();
 }
 
 // 出界標記：資料超出固定軸時，在被裁掉的方向畫一個紅色三角。
 // 絕不能讓資料「圖上消失但讀數照報」——那是畫面對學生說謊（DEV_SPEC 第 7 節）
-function drawOutMark(ctx, d, p, X, Y, W, padL, padR, padT){
-  const overV = p.v > AXIS_V_MAX, overM = p.m > AXIS_M_MAX;
+function drawOutMark(ctx, d, p, X, Y, W, H, padL, padR, padT, padB){
+  // 質量為負（實驗模式可以填）也算出界，一樣要標記：
+  // 少了這個分支，三角會畫在 clip 區外被裁掉，變成「提示說有 N 個超界點，圖上一個都找不到」
+  const overV = p.v > AXIS_V_MAX, overM = p.m > AXIS_M_MAX, underM = p.m < 0;
   const r = 6 * U;
   const x = overV ? W - padR - r : X(p.v);
-  const y = overM ? padT + r : Y(p.m);
+  const y = overM ? padT + r : (underM ? H - padB - r : Y(p.m));
   ctx.save();
   ctx.beginPath();
   if (overM){ ctx.moveTo(x, y - r); ctx.lineTo(x - r * 0.8, y + r * 0.6); ctx.lineTo(x + r * 0.8, y + r * 0.6); }
+  else if (underM){ ctx.moveTo(x, y + r); ctx.lineTo(x - r * 0.8, y - r * 0.6); ctx.lineTo(x + r * 0.8, y - r * 0.6); }
   else { ctx.moveTo(x + r, y); ctx.lineTo(x - r * 0.6, y - r * 0.8); ctx.lineTo(x - r * 0.6, y + r * 0.8); }
   ctx.closePath();
   ctx.fillStyle = C.out; ctx.fill();
@@ -620,33 +676,91 @@ function drawOutMark(ctx, d, p, X, Y, W, padL, padR, padT){
   ctx.restore();
 }
 
+/* 資料點的形狀也隨組別改變。五個序列色的明度全距不到 10 個 L* 單位，
+   投影機一洗飽和度就幾乎同灰——形狀是不受投影影響的第二條區辨通道 */
+function pointPath(ctx, x, y, r, slot){
+  ctx.beginPath();
+  switch (slot % 5){
+    case 0: ctx.arc(x, y, r, 0, Math.PI * 2); break;
+    case 1: ctx.rect(x - r * 0.88, y - r * 0.88, r * 1.76, r * 1.76); break;
+    case 2: ctx.moveTo(x, y - r * 1.15); ctx.lineTo(x + r, y + r * 0.78); ctx.lineTo(x - r, y + r * 0.78); ctx.closePath(); break;
+    case 3: ctx.moveTo(x, y - r * 1.2); ctx.lineTo(x + r * 1.2, y); ctx.lineTo(x, y + r * 1.2); ctx.lineTo(x - r * 1.2, y); ctx.closePath(); break;
+    default: ctx.moveTo(x, y + r * 1.15); ctx.lineTo(x + r, y - r * 0.78); ctx.lineTo(x - r, y - r * 0.78); ctx.closePath();
+  }
+}
+// 本次繪製已放好的代號圓，供防碰撞使用。每次 drawChart 開頭清空
+let labelBoxes = [];
+
 // 資料組代號：顏色不得是唯一的區辨方式（DESIGN_SPEC 第 3 節）。
 // 標在擬合線的右端，沒有線就標在最後一個落在圖內的點旁
-function drawSeriesLabel(ctx, d, f, X, Y, padT, padB, H){
-  let pos = null;
+// 代號要標在哪：有線就標在線的右端，沒線就標在最後一個落在圖內的點旁
+function labelAnchor(d, f, X, Y){
   if (f && state.showFit){
     for (let v = AXIS_V_MAX; v >= 0; v -= 2){
       const m = f.a * v + f.b;
-      if (m >= 0 && m <= AXIS_M_MAX){ pos = { x:X(v), y:Y(m) }; break; }
+      if (m >= 0 && m <= AXIS_M_MAX) return { x:X(v), y:Y(m) };
     }
   }
-  if (!pos){
-    const inRange = d.points.filter(p => p.v <= AXIS_V_MAX && p.m <= AXIS_M_MAX && p.m >= 0);
-    const last = inRange[inRange.length - 1];
-    if (last) pos = { x:X(last.v), y:Y(last.m) };
-  }
+  const inRange = d.points.filter(p => p.v <= AXIS_V_MAX && p.m <= AXIS_M_MAX && p.m >= 0);
+  const last = inRange[inRange.length - 1];
+  return last ? { x:X(last.v), y:Y(last.m) } : null;
+}
+
+function drawSeriesLabel(ctx, d, f, pos, padT, padB, H, W, padL, padR){
   if (!pos) return;
-  const r = 9 * U;
-  const cx = pos.x - r - 2 * U;
+  const r = 10 * U;
+  // 方程式排在代號圓右邊，整塊的右緣對齊線的右端：讀起來就是「A 這條線的算式是 …」
+  const eq = (f && state.showFit && state.showEq) ? eqText(f) : '';
+  const eqFont = '700 ' + (11.5 * U) + 'px ' + FONT_STACK;
+  let tw = 0;
+  if (eq){ ctx.save(); ctx.font = eqFont; tw = ctx.measureText(eq).width; ctx.restore(); }
+  const blockW = r * 2 + (eq ? 5 * U + tw : 0);
+  let x0 = Math.min(pos.x - 2 * U, W - padR - 2 * U) - blockW;
+  if (x0 < padL + 2 * U) x0 = padL + 2 * U;   // 左邊塞不下就靠左，寧可壓到線也不要被裁掉
+  const cx = x0 + r;
   // 貼近上緣時翻到線的下方，免得被裁掉
   let cy = pos.y - r - 2 * U;
   if (cy < padT + r) cy = pos.y + r + 2 * U;
   if (cy > H - padB - r) cy = H - padB - r;
+  /* 防碰撞：兩條線只要在 V=60 都還在圖內，整塊的 x 範圍就幾乎重合，只剩 y 能分開。
+     內建液體相鄰兩種只差 0.10 g/cm³，在 60 mL 只差 6 g——比圓的直徑還小，
+     「換液體看斜率怎麼變」這個主要活動必定讓兩個代號疊死。往上或往下推開。
+     打開方程式後整塊變寬十倍，重疊判定必須改看整塊的 x 範圍，不能只比圓心 */
+  const gap = r * 2 + 2 * U;
+  const x1 = x0 + blockW;
+  /* 推擠量以「自己的理想位置」為基準向外找空位，不是以「撞到的那個框」為基準。
+     後者會在 |b.cy - cy| 剛好等於 gap 時因浮點誤差反覆推回同一格：實測五組全開時
+     有三個方程式疊死在同一高度，而 guard 用完就靜靜放棄了 */
+  const lo = padT + r, hi = H - padB - r;
+  const hits = y => labelBoxes.some(b => x0 < b.x1 && x1 > b.x0 && Math.abs(b.cy - y) < gap - 0.5);
+  if (hits(cy)){
+    outer:
+    for (let k = 1; k <= 12; k++){
+      for (const cand of [cy + k * gap, cy - k * gap]){
+        if (cand >= lo && cand <= hi && !hits(cand)){ cy = cand; break outer; }
+      }
+    }
+  }
+  labelBoxes.push({ x0, x1, cy });
+  if (eq){
+    // 方程式底下墊一層白：它必然會壓到格線與其他人的線，不墊就讀不出來
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,.88)';
+    rr(ctx, x0 + r * 2 + 2 * U, cy - 9.5 * U, tw + 6 * U, 19 * U, 4 * U);
+    ctx.fill();
+    ctx.fillStyle = '#1C2433'; ctx.font = eqFont;
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(eq, x0 + r * 2 + 5 * U, cy);
+    ctx.restore();
+  }
   ctx.save();
+  /* 白底＋彩色粗環＋深色字。原本是彩底白字，白字在綠/橘/紫/青上只有 3.4–4.3:1，
+     而代號正是顏色被投影洗掉後唯一的區辨依據，它自己必須先讀得清楚。
+     改成深色字之後文字恆為 16:1，彩色只出現在環上（非文字元素，門檻 3:1） */
   ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.fillStyle = d.color; ctx.fill();
-  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5 * U; ctx.stroke();
-  ctx.fillStyle = '#fff'; ctx.font = '700 ' + (11 * U) + 'px ' + FONT_STACK;
+  ctx.fillStyle = '#fff'; ctx.fill();
+  ctx.strokeStyle = d.color; ctx.lineWidth = 3 * U; ctx.stroke();
+  ctx.fillStyle = '#1C2433'; ctx.font = '700 ' + (12 * U) + 'px ' + FONT_STACK;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(d.label, cx, cy);
   ctx.restore();
@@ -691,6 +805,8 @@ function drawChart(){
   ctx.restore();
 
   ptPix = [];
+  labelBoxes = [];
+  const labelJobs = [];
   let outCount = 0;
   ctx.save();
   ctx.beginPath(); ctx.rect(padL, padT - 4 * U, W - padL - padR, H - padT - padB + 4 * U); ctx.clip();
@@ -711,18 +827,23 @@ function drawChart(){
     }
     for (const p of d.points){
       if (p.v > AXIS_V_MAX || p.m > AXIS_M_MAX || p.m < 0){
-        drawOutMark(ctx, d, p, X, Y, W, padL, padR, padT);
+        drawOutMark(ctx, d, p, X, Y, W, H, padL, padR, padT, padB);
         outCount++;
         continue;
       }
       const px = X(p.v), py = Y(p.m);
-      ctx.beginPath(); ctx.arc(px, py, 4.6 * U, 0, Math.PI * 2);
+      pointPath(ctx, px, py, 5 * U, d.slot);
       ctx.fillStyle = d.color; ctx.fill();
       ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.6 * U; ctx.stroke();
       ptPix.push({ x:px, y:py, v:p.v, m:p.m, name:d.name, label:d.label, color:d.color });
     }
-    drawSeriesLabel(ctx, d, f, X, Y, padT, padB, H);
+    labelJobs.push({ d, f, pos: labelAnchor(d, f, X, Y) });
   }
+  /* 代號與方程式最後畫，而且照「線的高低」排，不照資料組順序：
+     防碰撞是往下推，先畫的那個佔住位子。照資料組順序畫的話，圖上最高的那條線
+     會被排在後面、被推到別人下面去，方程式離自己的線愈來愈遠，還蓋住別條線 */
+  labelJobs.sort((p, q) => (p.pos ? p.pos.y : 1e9) - (q.pos ? q.pos.y : 1e9));
+  for (const j of labelJobs) drawSeriesLabel(ctx, j.d, j.f, j.pos, padT, padB, H, W, padL, padR);
   ctx.restore();
 
   // 有東西被裁掉就一定要說出來，不能靜默消失
@@ -746,9 +867,10 @@ function drawAll(){ drawApBg(); drawApFg(); drawChart(); }
 /* ═══ 5. 互動：控制元件 ═══ */
 const el = {};
 for (const id of ['selLiquid','selCyl','boxRho','boxCyl','rhoSlider','cylSlider','rhoVal','cylVal',
-                  'chkTare','tareHint','chkFit','chkGrid','panelSim','panelExp','apStage',
-                  'simBtns','expBtns','expHint','btnAdd','btnEmpty','stepText','dsCount','dsList',
-                  'expName','chkIncl','expTable','btnAddRow','btnExpAdd','btnExpClear','tip',
+                  'chkTare','tareHint','chkFit','chkEq','labEq','eqHint','panelSim','panelExp','apStage',
+                  'simBtns','expBtns','btnAdd','btnEmpty','stepText','dsCount','dsList',
+                  'expName','chkIncl','expTable','btnAddRow','btnExpAdd','expAddText','btnExpClear','expNote','tip',
+                  'tabSettingsText','tabSettingsIcon',
                   'btnClearAll','chart','chStage','apBg','apFg','status','btnReset'])
   el[id] = document.getElementById(id);
 
@@ -777,37 +899,55 @@ function refreshFill(input){
 }
 
 // 實驗表格列由 state.expRows 生成，值改動即寫回 state
+const MIN_ROWS = 2;   // 兩點才畫得出一條線，留著最後兩列不讓刪
 function buildExpRows(){
-  for (const n of [...el.expTable.querySelectorAll('.inp')]) n.remove();
+  for (const n of [...el.expTable.querySelectorAll('.inp, .row-del')]) n.remove();
   state.expRows.forEach((r, i) => {
     for (const f of ['v','m']){
       const inp = document.createElement('input');
       inp.type = 'number'; inp.inputMode = 'decimal';
-      inp.className = 'inp num'; inp.value = r[f];
+      inp.className = 'inp num' + (state.expSkipped.includes(i + 1) ? ' miss' : '');
+      inp.value = r[f];
       inp.dataset.i = i; inp.dataset.f = f;
       inp.setAttribute('aria-label', (f === 'v' ? '第 ' + (i + 1) + ' 列體積' : '第 ' + (i + 1) + ' 列質量'));
       if (f === 'm') inp.placeholder = '—';
       el.expTable.appendChild(inp);
     }
+    // 整列填錯時直接刪掉重來，不必逐格反白重打
+    const del = document.createElement('button');
+    del.className = 'row-del'; del.dataset.i = i;
+    del.setAttribute('aria-label', '刪掉第 ' + (i + 1) + ' 列');
+    del.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+    el.expTable.appendChild(del);
   });
 }
 
 // 換液體、換量筒、改自訂數值都等於重做一次實驗：先倒空，圖上既有的線保留供對照
-function emptyCyl(){
+function emptyCyl(reason){
   state.curKey = null; state.tip = null; syncTip();
-  if (state.targetV > 0 || state.v > 0){ state.targetV = 0; startLoop(); }
+  const had = state.targetV > 0.001 || state.v > 0.001;
+  if (had){ state.targetV = 0; startLoop(); }
+  // 量筒裡還有液體時把它倒掉，是學生沒有要求的狀態變更。不說一聲，
+  // 他只會看到自己剛量的 30 mL 憑空消失，而且不知道圖上的線有沒有跟著不見
+  if (had && reason) flashStatus(reason + '，量筒已經倒空重來。圖上畫好的線都會留著。');
   syncUI(); drawApBg(); drawApFg();
 }
-el.selLiquid.addEventListener('change', e => { state.liquidId = e.target.value; emptyCyl(); });
-el.selCyl.addEventListener('change', e => { state.cylId = e.target.value; emptyCyl(); });
+// curKey 失效時量筒也要跟著歸零：只清 curKey 的話，下次注水會從半滿的量筒續加，
+// 圖上冒出一個既沒有起點也沒有直線的孤點
+function dropCurrentRun(){
+  state.curKey = null;
+  if (state.targetV > 0.001){ state.targetV = 0; startLoop(); }
+}
+el.selLiquid.addEventListener('change', e => { state.liquidId = e.target.value; emptyCyl('換了液體'); });
+el.selCyl.addEventListener('change', e => { state.cylId = e.target.value; emptyCyl('換了量筒'); });
 el.rhoSlider.addEventListener('input', e => {
-  state.customRho = +(+e.target.value).toFixed(DEC.rho); refreshFill(e.target); emptyCyl();
+  state.customRho = +(+e.target.value).toFixed(DEC.rho); refreshFill(e.target); emptyCyl('改了密度');
 });
 el.cylSlider.addEventListener('input', e => {
-  state.customCyl = +e.target.value; refreshFill(e.target); emptyCyl();
+  state.customCyl = +e.target.value; refreshFill(e.target); emptyCyl('改了量筒質量');
 });
 
-/* 去皮：把當前這組換算成另一組同時留在圖上，讓「含量筒」與「未含量筒」兩條線可以直接對照 */
+/* 天秤歸零：把當前這組換算成另一組同時留在圖上，讓「含量筒」與「未含量筒」兩條線可以直接對照 */
 el.chkTare.addEventListener('change', e => {
   const next = e.target.checked, cyl = cylMass();
   const cur = state.datasets.find(d => d.key === state.curKey);
@@ -815,44 +955,75 @@ el.chkTare.addEventListener('change', e => {
     const nkey = [state.liquidId, rho().toFixed(2), next ? 'n' : 'y', cyl].join('|');
     const conv = cur.points.map(p => ({ v:p.v, m: next ? p.m - cyl : p.m + cyl }));
     const exist = state.datasets.find(d => d.key === nkey);
-    if (exist){ exist.points = conv; exist.visible = true; }
+    if (exist){
+      /* 以體積為鍵「合併」，不是整組覆寫。對照組可能已經自己量過別的體積——
+         直接指派會把那些點全部抹掉：量好 3 點的 A 組，切一次歸零再切回來就只剩 1 點，
+         連擬合線都跟著消失，而學生完全不知道自己做錯了什麼 */
+      const kept = exist.points.filter(p => !conv.some(q => Math.abs(q.v - p.v) < 0.01));
+      exist.points = kept.concat(conv).sort((a, b) => a.v - b.v);
+      exist.visible = true;
+    }
     else if (state.datasets.length >= MAX_SETS){
       // 放不下對照組：維持原狀並讓開關回彈。回彈一定要配訊息，
       // 否則學生只看到開關自己跳回去，會以為是壞了
       e.target.checked = state.tare;
-      flashStatus('圖上已有 ' + MAX_SETS + ' 組，放不下「去皮後」的對照組。請先在右欄刪掉一組。');
+      flashStatus('圖上已有 ' + MAX_SETS + ' 組，放不下「歸零後」的對照組。請先在右欄刪掉一組。');
       return;
     } else {
       const slot = nextSlot();
       state.datasets.push({
         id:++uid, key:nkey,
-        name: liqName() + (next ? '・未含量筒' : '・含量筒 ' + cyl + ' g'),
+        name: liqName() + (next ? '（已扣掉量筒）' : '（含量筒 ' + cyl + ' g）'),
         slot:slot.slot, color:slot.color, label:slot.label, visible:true, points:conv
       });
     }
     state.curKey = nkey;
-  } else state.curKey = null;
+  } else dropCurrentRun();
   state.tare = next;
   state.tip = null; syncTip();
   renderDsList(); drawChart(); drawApFg(); syncUI();
 });
 
-el.chkFit.addEventListener('change', e => { state.showFit = e.target.checked; drawChart(); });
-el.chkGrid.addEventListener('change', e => { state.showGrid = e.target.checked; drawChart(); });
+el.chkFit.addEventListener('change', e => {
+  state.showFit = e.target.checked;
+  // 方程式是那條線的算式：線關掉了，方程式不能自己留在圖上
+  if (!state.showFit){ state.showEq = false; el.chkEq.checked = false; }
+  drawChart(); syncUI();
+});
+el.chkEq.addEventListener('change', e => { state.showEq = e.target.checked; drawChart(); });
 el.expName.addEventListener('input', e => { state.expName = e.target.value; });
 el.chkIncl.addEventListener('change', e => { state.expIncl = e.target.checked; });
 el.expTable.addEventListener('input', e => {
   const inp = e.target.closest('.inp'); if (!inp) return;
-  state.expRows[+inp.dataset.i][inp.dataset.f] = inp.value;
+  const i = +inp.dataset.i;
+  state.expRows[i][inp.dataset.f] = inp.value;
+  /* 這一列一被動到就拿掉紅框，不必等下一次按加入。
+     這裡逐一改 class 而不呼叫 buildExpRows()——重建表格會把正在打字的輸入框換掉、焦點消失 */
+  if (state.expSkipped.includes(i + 1)){
+    state.expSkipped = state.expSkipped.filter(n => n !== i + 1);
+    for (const n of el.expTable.querySelectorAll('.inp')) if (+n.dataset.i === i) n.classList.remove('miss');
+  }
   syncUI();
+});
+el.expTable.addEventListener('click', e => {
+  const btn = e.target.closest('.row-del'); if (!btn) return;
+  // 剩兩列時不讓刪，但按鈕不變灰：學生按下去要得到一句理由，不是沒有反應
+  if (state.expRows.length <= MIN_ROWS){ flashStatus('至少要留兩列——兩個點才畫得出一條直線。'); return; }
+  state.expRows.splice(+btn.dataset.i, 1);
+  state.expSkipped = [];   // 列號整個往前挪了，舊的標記不再對應同一列
+  buildExpRows(); syncUI();
 });
 el.btnAddRow.addEventListener('click', () => {
   if (state.expRows.length >= MAX_ROWS) return;
   state.expRows.push({ v:'', m:'' });
   buildExpRows(); syncUI();
 });
+// 「換下一組」：表格與名稱一起清掉，並解除與圖上那條線的連結，
+// 下一次按鈕才會回到「加入圖表」而不是把新資料蓋到上一組頭上
 el.btnExpClear.addEventListener('click', () => {
   state.expRows = initState().expRows;
+  state.expName = ''; el.expName.value = '';
+  state.expLinkId = null; state.expSkipped = [];
   buildExpRows(); syncUI();
 });
 
@@ -889,9 +1060,12 @@ el.chart.addEventListener('pointerdown', e => {
     const dd = Math.hypot(q.x - x, q.y - y);
     if (dd < bd){ bd = dd; best = q; }
   }
+  // 實驗模式可以填 12.5 這種非整數體積，一律 toFixed(0) 會把它顯示成 13，
+  // 與學生自己填在左欄表格裡的數字打架
+  const vTxt = best && Number.isInteger(best.v) ? String(best.v) : (best ? String(+best.v.toFixed(1)) : '');
   state.tip = best ? {
-    x:best.x, y:best.y, name:best.name, color:best.color,
-    text:'V = ' + best.v.toFixed(DEC.vol) + ' mL　M = ' + best.m.toFixed(DEC.mass) + ' g'
+    x:best.x, y:best.y, name:best.name, color:best.color, label:best.label,
+    text:'V = ' + vTxt + ' mL　M = ' + best.m.toFixed(DEC.mass) + ' g'
   } : null;
   syncTip();
 });
@@ -903,7 +1077,9 @@ el.dsList.addEventListener('click', e => {
   if (btn.dataset.act === 'del'){
     const gone = state.datasets.find(d => d.id === id);
     state.datasets = state.datasets.filter(d => d.id !== id);
-    if (gone && gone.key === state.curKey) state.curKey = null;
+    if (gone && gone.key === state.curKey) dropCurrentRun();
+    // 表格連著的那條線被刪了，按鈕要退回「加入圖表」，否則會去更新一條不存在的線
+    if (state.expLinkId === id) state.expLinkId = null;
   } else {
     const d = state.datasets.find(x => x.id === id);
     if (d) d.visible = !d.visible;
@@ -912,7 +1088,8 @@ el.dsList.addEventListener('click', e => {
   renderDsList(); drawChart(); syncUI();
 });
 el.btnClearAll.addEventListener('click', () => {
-  state.datasets = []; state.curKey = null;
+  state.datasets = []; dropCurrentRun();
+  state.expLinkId = null;
   state.tip = null; syncTip();
   renderDsList(); drawChart(); syncUI();
 });
@@ -923,15 +1100,35 @@ el.btnExpAdd.addEventListener('click', () => {
     .map(r => ({ v:parseFloat(r.v), m:parseFloat(r.m) }))
     .filter(p => isFinite(p.v) && isFinite(p.m) && p.v >= 0)
     .sort((a, b) => a.v - b.v);
-  if (pts.length < 2 || state.datasets.length >= MAX_SETS) return;
+  if (pts.length < 2) return;
+  const name = ((state.expName || '實驗組').trim() || '實驗組') + (state.expIncl ? '（含量筒）' : '（已扣掉量筒）');
+  /* 這張表格已經畫過一條線 → 就改那一條。學生發現某一格打錯，改完直接更新，
+     圖上不會多冒出一條錯的、還要自己回想哪條才是對的 */
+  const linked = state.expLinkId && state.datasets.find(d => d.id === state.expLinkId);
+  if (linked){
+    linked.points = pts; linked.name = name; linked.visible = true;
+    state.tip = null; syncTip();
+    // 名稱本身就帶括號（含量筒），外面再包一層括號會變成雙層，改用冒號
+    const msg = expReport('已經更新圖上的 ' + linked.label + '：' + name, pts.length);
+    renderDsList(); drawChart(); syncUI();
+    flashStatus(msg);
+    return;
+  }
+  if (state.datasets.length >= MAX_SETS) return;
+  // 連按兩次會建出一模一樣的第二條線：資料完全重疊、代號疊死，還白吃一個名額
+  const dup = state.datasets.find(d => d.points.length === pts.length &&
+    d.points.every((p, i) => Math.abs(p.v - pts[i].v) < 0.01 && Math.abs(p.m - pts[i].m) < 0.01));
+  if (dup){ flashStatus('這組數據已經畫在圖上了（' + dup.label + '）。'); return; }
   const slot = nextSlot();
   state.datasets.push({
-    id:++uid, key:'exp' + uid,
-    name:((state.expName || '實驗組').trim() || '實驗組') + (state.expIncl ? '・含量筒' : '・未含量筒'),
+    id:++uid, key:'exp' + uid, name,
     slot:slot.slot, color:slot.color, label:slot.label, visible:true, points:pts
   });
+  state.expLinkId = uid;
   state.tip = null; syncTip();
+  const msg = expReport('已經畫好 ' + slot.label + '：' + name, pts.length);
   renderDsList(); drawChart(); syncUI();
+  flashStatus(msg);
 });
 
 /* 右欄列表：只在資料組增刪或顯隱變動時重建，不隨每幀動畫重畫 */
@@ -940,9 +1137,9 @@ function renderDsList(){
   if (!state.datasets.length){
     const p = document.createElement('div');
     p.className = 'ds-empty';
-    p.textContent = state.screen === 0
-      ? '按「加 ' + POUR_STEP + ' mL」開始注水，每加一次就描一個點。'
-      : '填好左欄表格後按「加入圖表」。';
+    // 圖表中央已經有一句「按加 10 mL 開始注水」的指引，這裡再講一次同樣的話
+    // 只是把同一句用不同措辭寫兩遍，同時佔住畫面兩處
+    p.textContent = '還沒有畫任何線。';
     el.dsList.appendChild(p);
     return;
   }
@@ -950,7 +1147,7 @@ function renderDsList(){
     const row = document.createElement('div');
     row.className = 'ds-row' + (d.visible ? '' : ' off');
     const dot = document.createElement('span');
-    dot.className = 'ds-dot'; dot.style.background = d.color;
+    dot.className = 'ds-dot'; dot.style.borderColor = d.color;
     dot.textContent = d.label;   // 與圖上的代號對應，投影把顏色洗掉時仍分得出來
     const nm = document.createElement('span');
     nm.className = 'ds-name'; nm.textContent = d.name;
@@ -975,9 +1172,13 @@ function syncTip(){
   el.tip.style.left = t.x + 'px';
   el.tip.style.top = t.y + 'px';
   el.tip.innerHTML = '';
+  // 名稱原本用序列色當文字（3.4–4.3:1）。顏色改由前面的小圓點承擔——
+  // 圓點是非文字元素（門檻 3:1），文字回到正常字色
+  const sw = document.createElement('span');
+  sw.className = 'tip-sw'; sw.style.background = t.color;
   const nm = document.createElement('span');
-  nm.className = 'nm'; nm.style.color = t.color; nm.textContent = t.name;
-  el.tip.append(nm, document.createElement('br'), document.createTextNode(t.text));
+  nm.className = 'nm'; nm.textContent = t.label + '　' + t.name;
+  el.tip.append(sw, nm, document.createElement('br'), document.createTextNode(t.text));
 }
 
 /* 把 state 寫回 DOM：所有條件顯示與禁用態集中在這裡，不散落在各事件裡 */
@@ -988,7 +1189,6 @@ function syncUI(){
   el.apStage.hidden = !isSim;
   el.simBtns.hidden = !isSim;
   el.expBtns.hidden = isSim;
-  el.expHint.hidden = isSim;
 
   el.selLiquid.value = state.liquidId;
   el.selCyl.value = state.cylId;
@@ -996,11 +1196,23 @@ function syncUI(){
   el.boxCyl.hidden = state.cylId !== 'custom';
   el.rhoVal.textContent = state.customRho.toFixed(DEC.rho);
   el.cylVal.textContent = String(state.customCyl);
-  el.tareHint.textContent = state.tare ? '讀數不含量筒 → 線過原點' : '讀數含量筒 → 線有截距';
+  // 學生還沒畫出任何一條線，就要先看懂「截距」——這個詞在這裡出現得太早。
+  // 改成描述天秤此刻在做什麼；「截距」留給說明彈窗與老師在線畫出來之後再點出
+  el.tareHint.textContent = state.tare ? '已經扣掉量筒，只秤液體的重量' : '現在的讀數包含量筒本身的重量';
   el.stepText.textContent = String(POUR_STEP);
+  // 這顆 chip 在兩個模式打開的是不同東西，名字要跟著換
+  el.tabSettingsText.textContent = isSim ? '設定' : '數據輸入';
+  el.tabSettingsIcon.className = 'fa-solid ' + (isSim ? 'fa-gear' : 'fa-table-list');
+
+  // 沒有直線就沒有方程式：勾選項鎖住，並直接說出要先做什麼，不是只讓它變灰
+  el.chkEq.disabled = !state.showFit;
+  el.labEq.classList.toggle('locked', !state.showFit);
+  el.eqHint.hidden = state.showFit;
 
   const full = state.datasets.length >= MAX_SETS;
-  el.dsCount.textContent = state.datasets.length + '/' + MAX_SETS;
+  // 「0/5」是計數器寫法。平時不必顯示數字，只在快滿與已滿時說一句人話
+  const left = MAX_SETS - state.datasets.length;
+  el.dsCount.textContent = full ? '已經放滿 ' + MAX_SETS + ' 條' : (left <= 2 ? '還可以放 ' + left + ' 條' : '');
   el.dsCount.classList.toggle('full', full);
 
   // 邊界情境：按鈕照樣禁用，但一定要配一句看得懂的說明。
@@ -1009,15 +1221,22 @@ function syncUI(){
   el.btnAdd.disabled = state.targetV >= MAX_V || (full && !lineExists);
   el.btnEmpty.disabled = state.targetV <= 0;
   el.btnAddRow.disabled = state.expRows.length >= MAX_ROWS;
-  el.btnExpAdd.disabled = full || countExpPoints() < 2;
+  // 表格連著的線還在圖上 → 這顆鈕是「更新」，不受 5 組上限影響（它不會新增第 6 條）
+  const linked = state.expLinkId ? state.datasets.find(d => d.id === state.expLinkId) : null;
+  el.expAddText.textContent = linked ? '更新圖上的線' : '加入圖表';
+  // 同一句話不在畫面上出現兩次：這行說明會隨階段換句，不與底部狀態列重複
+  el.expNote.textContent = linked
+    ? '數字打錯了可以直接改，改完按「更新圖上的線」，圖上的 ' + linked.label + ' 就會跟著改。要畫下一組請按「清空表格，換下一組」。'
+    : '填好至少兩列，按下方「加入圖表」。填錯整列可以按右邊的 ✕ 刪掉。';
+  el.btnExpAdd.disabled = (full && !linked) || countExpPoints() < 2;
 
   let msg = '';
   if (isSim){
     if (state.targetV >= MAX_V) msg = '量筒已到刻度上限 ' + MAX_V + ' mL。要換一組就按「倒空量筒」。';
     else if (full && !lineExists) msg = '圖上已有 ' + MAX_SETS + ' 組資料，要畫新的線請先在右欄刪掉一組。';
   } else {
-    if (full) msg = '圖上已有 ' + MAX_SETS + ' 組資料，請先在右欄刪掉一組。';
-    else if (countExpPoints() < 2) msg = '至少要有兩列「體積與質量都填好」的數據，才能畫出直線。';
+    if (countExpPoints() < 2) msg = '至少要有兩列「體積與質量都填好」的數據，才能畫出直線。';
+    else if (full && !linked) msg = '圖上已有 ' + MAX_SETS + ' 組資料，請先在右欄刪掉一組。';
     else if (state.expRows.length >= MAX_ROWS) msg = '表格已達 ' + MAX_ROWS + ' 列上限。';
   }
   // flashStatus 的暫時訊息還沒過期時不覆蓋它
@@ -1035,6 +1254,34 @@ function flashStatus(msg){
   clearTimeout(statusTimer);
   statusTimer = setTimeout(() => { statusTimer = 0; syncUI(); }, 5000);
 }
+/* 哪幾列填了東西卻沒被畫上去（1-based 列號）。
+   靜默略過等於畫面對學生說謊：超出座標範圍都會標紅色三角並說「有 N 個點超出」了，
+   漏填一格卻是圖上少一個點、一句話都不說，學生會以為五個點都在上面 */
+function expSkippedRows(){
+  const ok = i => {
+    const v = parseFloat(state.expRows[i].v), m = parseFloat(state.expRows[i].m);
+    return isFinite(v) && isFinite(m) && v >= 0;
+  };
+  let lastOk = -1;
+  state.expRows.forEach((r, i) => { if (ok(i)) lastOk = i; });
+  const bad = [];
+  state.expRows.forEach((r, i) => {
+    if (ok(i)) return;
+    /* 體積欄預填了 10～50，所以「有體積、沒質量」正是尚未動過的預設狀態。
+       末尾留白是「只量到這裡」，警告它等於每次都在罵人；中間空一格才幾乎一定是漏填。
+       質量填了卻畫不上去（體積空白或負數）則一律要說，那是明確的輸入被丟掉 */
+    if (i < lastOk || String(r.m).trim() !== '') bad.push(i + 1);
+  });
+  return bad;
+}
+// 加入／更新後一律回報實際畫上幾個點，不是只在出事時才說
+function expReport(head, n){
+  const bad = expSkippedRows();
+  state.expSkipped = bad;
+  buildExpRows();
+  return head + '，圖上有 ' + n + ' 個點。'
+       + (bad.length ? '第 ' + bad.join('、') + ' 列沒有填完整，沒有畫上去。' : '');
+}
 // 有效資料列：體積與質量都填了合法數字才算
 function countExpPoints(){
   return state.expRows.filter(r => {
@@ -1050,7 +1297,7 @@ function loop(ts){
   const dt = Math.min((ts - last) / 1000, 0.05);   // 鉗 50ms：切分頁回來不跳格
   last = ts;
   const landed = update(dt);
-  if (landed){ commit(state.v); drawChart(); syncUI(); }
+  if (landed.length){ for (const v of landed) commit(v); drawChart(); syncUI(); }
   drawApFg();
   // 水位到定位就收工，靜止時不空轉 rAF
   if (Math.abs(state.v - state.targetV) < 0.001){ stopLoop(); return; }
@@ -1074,9 +1321,14 @@ function uiScale(){
   // 自動判定依賴 screen API，它在部分環境要等很久才有值、甚至一直回 0，不能當唯一手段
   const forced = parseFloat(new URLSearchParams(location.search).get('u'));
   if (forced > 0) return clampScale(forced);
-  const sw = Math.max(window.screen.width || 0, window.innerWidth || 0) || 1280;
-  const cssW = window.innerWidth || sw;
-  const phys = sw * (window.devicePixelRatio || 1);   // 實體像素＝裝置級別
+  /* 裝置級別要用「螢幕長邊」判定，不能用當下的寬度。同一台 iPad 轉成直向時寬度變小，
+     820 × 2 = 1640 掉到平板門檻 2000 以下，會被當成桌機而少放大一級——
+     結果是同一台機器轉個方向，11px 的軸刻度與代號就掉到 12px 可讀下限以下。
+     長邊不隨旋轉改變，才是裝置本身的屬性 */
+  const longSide = Math.max(window.screen.width || 0, window.screen.height || 0,
+                            window.innerWidth || 0, window.innerHeight || 0) || 1280;
+  const cssW = window.innerWidth || longSide;
+  const phys = longSide * (window.devicePixelRatio || 1);   // 實體像素＝裝置級別
   let u;
   if (phys >= 3000){
     // 教室觸控大屏。要補償的是「一個 CSS px 等於幾毫米」，那取決於系統縮放設定：
@@ -1093,7 +1345,11 @@ function uiScale(){
 // 放大到版面容不下時，flex 會被擠成負值、繪圖區被吃到剩幾十 px 高，整個畫面等於作廢
 function clampScale(u){
   const cssW = window.innerWidth || 1280, cssH = window.innerHeight || 800;
-  return Math.max(1, Math.min(u, 4, cssW / 900, cssH / 620));
+  /* cssW/900 是「三欄並排」的寬度保護。<900px 已由 media query 摺成單欄
+     （左右欄變成浮出面板），這個保護不再適用；照樣套用的話 iPad 直向 820px
+     會被壓回 1，字反而比同一台機器橫向時還小 */
+  const widthGuard = cssW >= 900 ? cssW / 900 : 4;
+  return Math.max(1, Math.min(u, 4, widthGuard, cssH / 620));
 }
 // 回傳「這次有沒有真的改變」：有改變才需要重算畫布，算出同值就回 false，不會無限循環
 function applyScale(){
@@ -1168,6 +1424,10 @@ document.getElementById('nav').addEventListener('click', e => {
   state.tip = null; syncTip();
   for (const t of document.querySelectorAll('.navtab')) t.setAttribute('aria-selected', t === tab);
   document.body.classList.remove('show-settings', 'show-data');
+  /* <900px 左欄摺成浮出面板。模擬模式沒差（主要動作「加 10 mL」在底部抽屜），
+     但實驗模式的全部內容都在那個面板裡——不自動展開的話，學生點進「實驗模式」
+     會看到一張空圖表和無事可做的畫面，還得先猜到那顆叫「數據輸入」的 chip */
+  if (state.screen === 1 && window.innerWidth < 900) document.body.classList.add('show-settings');
   syncSheetTabs();
   syncUI();
   renderDsList();
@@ -1214,7 +1474,7 @@ el.btnReset.addEventListener('click', () => {
   // DOM 上的開關要跟著回到 initState 的值——HTML 的 checked、initState、這裡三處必須一致
   el.chkTare.checked = state.tare;
   el.chkFit.checked = state.showFit;
-  el.chkGrid.checked = state.showGrid;
+  el.chkEq.checked = state.showEq;
   el.chkIncl.checked = state.expIncl;
   el.expName.value = '';
   el.rhoSlider.value = state.customRho;
