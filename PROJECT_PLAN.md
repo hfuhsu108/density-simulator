@@ -366,3 +366,33 @@ Browser pane 實際重現過，不是推測。**都還沒有動手修，等裁�
 - **C8 三顆清除類按鈕同時在場。** 實驗模式下「清掉全部的線」（右欄）、「清空表格，換下一組」、
   「全部重置」三顆並存。2026-08-23 已用文案區分過，本次「清空表格」再加了「換下一組」，
   語意更清楚了，但三顆仍然是三顆。暫不再動。
+
+---
+
+## 2026-08-26　全螢幕鈕：跨模擬缺陷回流修正
+
+本次改動不是從這支模擬發現的，是 `motion-graphs-sim` 修完後回頭比對，發現這裡是**同一段舊寫法**。
+
+**問題**（使用者在教室觸控大屏實測，筆電與 iPad 完全正常）：按網頁的全螢幕鈕確實進得去，
+再按一次卻退不出來。那台瀏覽器的 `document.exitFullscreen()` 會回報成功、派送
+`fullscreenchange`、把 `fullscreenElement` 設成 `null`，**畫面卻沒有離開全螢幕**，
+之後點頁面空白處狀態又自己跳回全螢幕。
+
+**修正**（`index.html` 全螢幕區塊，照 `_shared/DEV_SPEC.md` 5.2 新寫法）：
+
+- 判斷改為三個旗標一起看（`fullscreenElement` / `webkitFullscreenElement` /
+  `webkitIsFullScreen`）——iPadOS Safari 對非影片元素有時只設最後一個。
+- 退出改走 `exitFull()`：依序試 `exitFullscreen` / `webkitExitFullscreen` /
+  `mozCancelFullScreen` / `msExitFullscreen`，呼叫標準版後 150ms **用視窗高度**複檢，
+  仍佔滿螢幕就補一次 webkit 版。**複檢不能問 `fullscreenElement`**，它在那台機器上已經是 `null`。
+- 圖示與 `aria-label` 跟著狀態切換（`fa-expand` ↔ `fa-compress`），並監聽
+  `fullscreenchange` ／ `webkitfullscreenchange`。這一條的理由是**可診斷性**：
+  狀態不可見時，這個 bug 完全無從判斷根因。
+
+**驗證**：攔截四個 API 記錄呼叫序列——未全螢幕時按下走 `request`、全螢幕時走 `exit`；
+正常情境只呼叫 `standard`，偽造「狀態說退出但畫面仍滿版」得到 `standard → webkit`；
+圖示雙向切換正確。另跑冒煙測試確認加水、重置、兩個分頁未受影響，console 無錯誤。
+**大屏由使用者實測通過**（2026-08-26）。
+
+技術細節見 handbook `pitfalls-frontend.md` 第 16 條；三種驗收裝置的分工見專案 memory
+`sim-test-devices`。**檔案現況**：`index.html` 1531 行。
