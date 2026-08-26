@@ -1449,17 +1449,41 @@ function bindSheet(btnId, cls, otherCls){
 bindSheet('tabSettings', 'show-settings', 'show-data');
 bindSheet('tabData', 'show-data', 'show-settings');
 
-// 全螢幕：API 不存在就把按鈕藏起來，不留無效按鈕
+// 全螢幕（DEV_SPEC 5.2）：API 不存在就把按鈕藏起來，不留無效按鈕
 const appEl = document.getElementById('app');
 const fullBtn = document.getElementById('btnFull');
+// iPadOS Safari 對非影片元素有時只設 webkitIsFullScreen，三個旗標一起看才判得準
+const isFull = () => !!(document.fullscreenElement || document.webkitFullscreenElement
+                        || document.webkitIsFullScreen);
+// 畫面「實際上」是不是還佔滿螢幕。教室大屏的 exitFullscreen 會回報成功、把
+// fullscreenElement 設成 null，畫面卻沒退出——那裡的狀態機不可信，只能量視窗高度
+const isViewportFull = () => window.innerHeight >= (window.screen.height || 0) - 2;
+// 退出依序試每一種實作，不是只呼叫存在的第一個（教室大屏實測踩過，見 DEV_SPEC 5.2）
+function exitFull(){
+  const fns = [document.exitFullscreen, document.webkitExitFullscreen,
+               document.mozCancelFullScreen, document.msExitFullscreen]
+              .filter(f => typeof f === 'function');
+  if (!fns.length) return;
+  const run = i => { try { Promise.resolve(fns[i].call(document)).catch(() => {}); } catch (e) {} };
+  run(0);
+  if (fns.length > 1) setTimeout(() => { if (isViewportFull()) run(1); }, 150);
+}
+// 狀態必須看得見：圖示恆定不變的話，全螢幕相關的 bug 根本無從診斷
+function syncFullBtn(){
+  const on = isFull();
+  fullBtn.querySelector('i').className = 'fa-solid ' + (on ? 'fa-compress' : 'fa-expand');
+  fullBtn.setAttribute('aria-label', on ? '離開全螢幕' : '全螢幕');
+}
 if (appEl.requestFullscreen || appEl.webkitRequestFullscreen){
   fullBtn.addEventListener('click', () => {
-    if (document.fullscreenElement || document.webkitFullscreenElement){
-      (document.exitFullscreen || document.webkitExitFullscreen).call(document);
-    } else {
-      (appEl.requestFullscreen || appEl.webkitRequestFullscreen).call(appEl);
-    }
+    if (isFull()) { exitFull(); return; }
+    const enter = (appEl.requestFullscreen || appEl.webkitRequestFullscreen).bind(appEl);
+    try { Promise.resolve(enter()).catch(() => {}); } catch (e) {}
   });
+  // 用 Esc 或系統手勢離開時圖示也要跟著切回來
+  for (const ev of ['fullscreenchange', 'webkitfullscreenchange'])
+    document.addEventListener(ev, syncFullBtn);
+  syncFullBtn();
 } else fullBtn.hidden = true;
 
 /* 重置：state 完整還原成初始值，含圖表資料與所有顯示開關（DEV_SPEC 第 1 節）。
