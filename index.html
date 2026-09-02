@@ -80,17 +80,28 @@ button:not(:disabled):active,.chip:active,label.check:active,label.switch:active
 .topbar .actions{margin-left:auto;display:flex;gap:12px}
 .icon-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--c-bd-ctl);background:var(--c-surface);display:flex;align-items:center;justify-content:center;color:var(--c-text-2);font-size:14px}
 
-main{flex:1;position:relative;display:grid;grid-template-columns:1fr 2fr 1fr;gap:12px;padding:12px 14px 0;min-height:0}
+main{flex:1;position:relative;display:grid;grid-template-columns:1fr 1.5fr 1.5fr;gap:12px;padding:12px 14px 0;min-height:0}
+/* 實驗模式：左欄只留「顯示」那一段，模擬設定收起。三欄比例不變——
+   輸入區佔中欄、圖表留右欄，圖表寬度兩個模式一致，斜率才不會因模式而異 */
+main.exp .sim-only{display:none}
 .panel{background:var(--c-surface);border:1px solid var(--c-bd);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:14px;min-width:0;overflow-y:auto}
 .hr{height:1px;background:var(--c-bd);flex:none}
 
-/* 中欄上下二分：器材 44% / 座標圖 56%；實驗模式時器材收起，圖表佔滿。
-   兩塊都設 min-height 並讓中欄可捲動——否則視窗一矮，器材會把圖表擠成 0 高而整個消失 */
+/* 中欄只放器材（DESIGN_SPEC §1 2026-08-30 修訂：圖表一律在右欄）。
+   仍保留 min-height 與可捲動：<900px 時圖表會排到中欄下方，視窗一矮
+   器材會把圖表擠成 0 高而整個消失 */
 .midcol{display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0;overflow-y:auto}
+/* 輸入區佔滿中欄（與器材舞台互斥）。min-height:0 讓列數多時在自己內部捲，不把中欄撐高 */
+#panelExp{flex:1;min-height:0}
 .stage{position:relative;flex:1 1 44%;min-height:130px;border-radius:10px;border:1px solid #C4D3E8;overflow:hidden;background:#FDFAF3}
 .stage canvas{position:absolute;inset:0;width:100%;height:100%}
-/* 座標圖光是四邊 padding 就吃掉約 96px，低於 160px 畫出來不具可讀性 */
-.chartbox{flex:1 1 56%;min-height:160px;background:var(--c-surface);border:1px solid var(--c-bd);border-radius:10px;padding:10px 12px 8px;display:flex;flex-direction:column}
+/* 右欄容器（來源：_shared/design/layout.html:62-64）。min-height:0 不可省——
+   少了它 flex 會依內容高度而非容器高度分配，右欄撐出 main 後最下面那張卡被抽屜蓋住，
+   而且不會出現捲軸、沒有任何錯誤，只能靠量測發現 */
+.rightcol{display:flex;flex-direction:column;gap:10px;min-width:0;min-height:0}
+/* 座標圖光是四邊 padding 就吃掉約 96px，低於 160px 畫出來不具可讀性。
+   flex:2 對 .datacol 的 flex:1，比照 layout.html:66 的圖表卡:數據卡＝2:1 */
+.chartbox{flex:2 1 0;min-height:160px;background:var(--c-surface);border:1px solid var(--c-bd);border-radius:10px;padding:10px 12px 8px;display:flex;flex-direction:column}
 .chartwrap{position:relative;flex:1;min-height:0}
 .chartwrap canvas{position:absolute;inset:0;width:100%;height:100%}
 /* 資料點提示：canvas 畫圖、DOM 顯示提示，文字才不會被 DPR 影響 */
@@ -98,8 +109,8 @@ main{flex:1;position:relative;display:grid;grid-template-columns:1fr 2fr 1fr;gap
 .tip .nm{font-weight:700}
 .tip .tip-sw{display:inline-block;width:.72em;height:.72em;border-radius:50%;margin-right:5px}
 
-/* 右欄：圖上的數據組 */
-.datacol{background:var(--c-surface);border:1px solid var(--c-bd);border-radius:10px;padding:10px 10px 6px;display:flex;flex-direction:column;gap:6px;min-width:0;overflow:hidden}
+/* 右欄下半：圖上的數據組 */
+.datacol{flex:1 1 0;background:var(--c-surface);border:1px solid var(--c-bd);border-radius:10px;padding:10px 10px 6px;display:flex;flex-direction:column;gap:6px;min-width:0;min-height:0;overflow:hidden}
 /* 右欄在 iPad 橫向只有 243px：標題與「清空」都要 nowrap，否則會斷成兩行 */
 .ds-head{display:flex;align-items:center;justify-content:space-between;gap:6px;flex:none}
 .ds-head h2{white-space:nowrap}
@@ -121,9 +132,12 @@ main{flex:1;position:relative;display:grid;grid-template-columns:1fr 2fr 1fr;gap
   font-size:calc(11.5px * var(--u));line-height:1}
 .ds-name{flex:1;font-size:calc(12.5px * var(--u));font-weight:700;line-height:1.3;min-width:0;overflow-wrap:anywhere}
 .ds-btn{width:36px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--c-text-3);font-size:13px;flex:none}
-/* 顯示／隱藏與刪除相鄰，36+8 的間距讓兩個 44px 命中盒零死區貼合——右邊那顆是刪除，
-   誤觸代價不對稱，額外拉開到 50px */
+/* 命中區（44×44 透明 ::after）由下面「視覺尺寸小於鐵律 6」那條統一給，這裡不重複定義 */
 .ds-btn+.ds-btn{margin-left:6px}
+/* 刪除鈕與它左邊那顆的 44px 命中盒不能貼合：誤觸代價不對稱（按錯就沒了，不像顯示／隱藏按錯再按回來）。
+   視覺 36+14=50，兩個命中盒之間留 6px 死區。本次加了鉛筆鈕、同一列變三顆，這條才補上——
+   排在 .ds-btn+.ds-btn 之後才蓋得過它 */
+.ds-btn.del{margin-left:14px}
 .ds-empty{font-size:calc(12.5px * var(--u));color:var(--c-text-2);padding:8px 2px;line-height:1.5}
 
 .drawer{flex:none;margin:12px 14px;background:var(--c-surface);border:1px solid var(--c-bd);border-radius:12px;padding:8px 18px 10px;box-shadow:0 -4px 12px rgba(28,36,51,.05)}
@@ -232,10 +246,20 @@ label.switch .sub{font-size:calc(11.5px * var(--u));color:var(--c-text-2);displa
 
 /* ═══ 5. 響應式：<900px（涵蓋所有 iPad 直向 768/820/834）左右欄摺入底部分頁 ═══ */
 @media (max-width:899px){
-  main{grid-template-columns:1fr}
-  .panel,.datacol{display:none}
+  /* 圖表不摺進抽屜（DESIGN_SPEC §1 例外條款：圖表是教學主體，收進抽屜等於消失），
+     改回「器材在上 44% / 座標圖在下 56%」。做法是讓 .rightcol 用 display:contents 讓出盒模型，
+     .chartbox 與 .datacol 直接成為 main 的 grid item，位置全部由 CSS 的列定位決定。
+     刻意不用 JS 搬 DOM：matchMedia 的 change 與 ResizeObserver 都不是每種尺寸變動都會派送
+     （實測 viewport 1366→820→1366 兩者皆未觸發），靠事件搬會漏搬，旋轉平板就破版 */
+  main{grid-template-columns:1fr;grid-template-rows:44fr 56fr}
+  .rightcol{display:contents}
+  .midcol{grid-row:1}
+  .chartbox{grid-row:2;min-height:0}
+  /* 只摺左欄。選擇器必須是 main > .panel：實驗模式的輸入區也是 .panel，
+     但它在中欄、屬於主畫面，寫成 .panel 會把它一起藏掉，實驗模式中欄就全空了 */
+  main > .panel,.datacol{display:none}
   .mobile-tabs{display:flex}
-  body.show-settings .panel:not([hidden]){display:flex;position:absolute;left:14px;right:14px;bottom:0;max-height:64%;z-index:5;box-shadow:0 8px 28px rgba(28,36,51,.25)}
+  body.show-settings main > .panel{display:flex;position:absolute;left:14px;right:14px;bottom:0;max-height:64%;z-index:5;box-shadow:0 8px 28px rgba(28,36,51,.25)}
   body.show-data .datacol{display:flex;position:absolute;left:14px;right:14px;bottom:0;max-height:64%;z-index:5;box-shadow:0 8px 28px rgba(28,36,51,.22)}
 }
 </style>
@@ -253,40 +277,46 @@ label.switch .sub{font-size:calc(11.5px * var(--u));color:var(--c-text-2);displa
     </div>
   </header>
 
-  <!-- 三欄：設定｜器材＋座標圖｜數據組 -->
-  <main>
-    <!-- 左欄之一：模擬模式設定 -->
-    <section class="panel" id="panelSim">
-      <h2>設定</h2>
+  <!-- 三欄：設定｜器材｜座標圖＋數據組（實驗模式收起中欄變兩欄） -->
+  <main id="mainGrid">
+    <!-- 左欄：兩個模式共用（模擬＝設定＋顯示，實驗＝只有顯示） -->
+    <section class="panel" id="panelLeft">
+      <!-- 標題隨模式改寫：模擬模式「設定」、實驗模式「顯示」 -->
+      <h2 id="leftTitle">設定</h2>
 
-      <div class="field">
+      <!-- sim-only 的元素只在模擬模式出現；沒有這個 class 的（顯示直線／方程式）
+           兩個模式都在——實驗模式同樣要能開趨勢線，那正是真實數據求密度的入口 -->
+      <div class="field sim-only">
         <span class="name">液體種類</span>
         <select class="inp" id="selLiquid" aria-label="液體種類"></select>
       </div>
 
-      <div class="sliderbox" id="boxRho" hidden>
+      <div class="sliderbox sim-only" id="boxRho" hidden>
         <div class="head"><span class="name">自訂密度 D</span><span class="val"><span id="rhoVal">1.00</span> g/cm³</span></div>
         <input type="range" id="rhoSlider" min="0.6" max="1.4" step="0.2" value="1" aria-label="自訂密度">
         <div class="minmax"><span>0.60</span><span>1.40</span></div>
       </div>
 
-      <div class="field">
+      <div class="field sim-only">
         <span class="name">量筒</span>
         <select class="inp" id="selCyl" aria-label="量筒"></select>
       </div>
 
-      <div class="sliderbox" id="boxCyl" hidden>
+      <div class="sliderbox sim-only" id="boxCyl" hidden>
         <div class="head"><span class="name">量筒質量 M<sub>量筒</sub></span><span class="val"><span id="cylVal">30</span> g</span></div>
         <input type="range" id="cylSlider" min="0" max="80" step="1" value="30" aria-label="量筒質量">
         <div class="minmax"><span>0</span><span>80</span></div>
       </div>
 
-      <div class="hr"></div>
+      <div class="hr sim-only"></div>
 
-      <label class="switch">
+      <label class="switch sim-only">
         <input type="checkbox" id="chkTare"><span class="track"></span>
         <span>天秤歸零<span class="sub" id="tareHint">現在的讀數包含量筒本身的重量</span></span>
       </label>
+
+      <div class="hr sim-only"></div>
+
       <label class="check">
         <input type="checkbox" id="chkFit"><span class="box"><i class="fa-solid fa-check"></i></span>顯示直線
       </label>
@@ -296,48 +326,52 @@ label.switch .sub{font-size:calc(11.5px * var(--u));color:var(--c-text-2);displa
       </label>
     </section>
 
-    <!-- 左欄之二：實驗模式輸入 -->
-    <section class="panel" id="panelExp" hidden>
-      <h2>實驗數據輸入</h2>
-      <div class="field">
-        <span class="name">這組數據的名稱</span>
-        <input type="text" class="inp" id="expName" placeholder="例：自來水" aria-label="這組數據的名稱">
-      </div>
-      <label class="check">
-        <input type="checkbox" id="chkIncl" checked><span class="box"><i class="fa-solid fa-check"></i></span>質量含量筒（天秤沒有歸零）
-      </label>
-      <div class="exp-table" id="expTable">
-        <span class="th">體積 V (mL)</span>
-        <span class="th">質量 M (g)</span>
-        <span class="th"></span>
-      </div>
-      <button class="btn-dash" id="btnAddRow"><i class="fa-solid fa-plus"></i>新增一列</button>
-      <!-- 這行字由 syncUI() 隨階段改寫，初始值必須與 syncUI 的「尚未連結」分支一字不差 -->
-      <p class="note" id="expNote">填好至少兩列，按下方「加入圖表」。填錯整列可以按右邊的 ✕ 刪掉。</p>
-    </section>
-
-    <!-- 中欄：器材舞台（僅模擬模式）＋座標圖 -->
-    <div class="midcol">
+    <!-- 中欄：器材舞台（模擬模式）與實驗數據輸入（實驗模式）互斥，各佔滿中欄。
+         輸入區放中欄而不放左欄，圖表才留得住右欄的 493px——與模擬模式同寬，
+         同一條線的斜率在兩個模式下才一致（改動前實驗模式是兩欄，圖表被拉成 995 寬、線變平）。
+         座標圖在右欄；<900px 由 CSS 列定位排到這下面 -->
+    <div class="midcol" id="midcol">
       <div class="stage" id="apStage">
         <canvas id="apBg"></canvas>
         <canvas id="apFg"></canvas>
       </div>
-      <div class="chartbox">
+
+      <section class="panel" id="panelExp" hidden>
+        <h2>實驗數據輸入</h2>
+        <div class="field">
+          <span class="name">這組數據的名稱</span>
+          <input type="text" class="inp" id="expName" placeholder="例：自來水" aria-label="這組數據的名稱">
+        </div>
+        <label class="check">
+          <input type="checkbox" id="chkIncl" checked><span class="box"><i class="fa-solid fa-check"></i></span>質量含量筒（天秤沒有歸零）
+        </label>
+        <div class="exp-table" id="expTable">
+          <span class="th">體積 V (mL)</span>
+          <span class="th">質量 M (g)</span>
+          <span class="th"></span>
+        </div>
+        <button class="btn-dash" id="btnAddRow"><i class="fa-solid fa-plus"></i>新增一列</button>
+        <!-- 這行字由 syncUI() 隨階段改寫，初始值必須與 syncUI 的「尚未連結」分支一字不差 -->
+        <p class="note" id="expNote">填好至少兩列，按下方「加入圖表」。填錯整列可以按右邊的 ✕ 刪掉。</p>
+      </section>
+    </div>
+
+    <!-- 右欄：座標圖＋圖上的數據組（DESIGN_SPEC §1：圖表一律放右欄，與中欄畫布水平對齊） -->
+    <div class="rightcol" id="rightcol">
+      <div class="chartbox" id="chartbox">
         <div class="chartwrap" id="chStage">
           <canvas id="chart"></canvas>
           <div class="tip" id="tip" hidden></div>
         </div>
       </div>
+      <section class="datacol" id="panelData">
+        <div class="ds-head">
+          <h2>圖上的線 <span class="ds-count num-val" id="dsCount"></span></h2>
+          <button class="link-btn" id="btnClearAll">清掉全部的線</button>
+        </div>
+        <div class="ds-list" id="dsList"></div>
+      </section>
     </div>
-
-    <!-- 右欄：圖上的數據組 -->
-    <section class="datacol" id="panelData">
-      <div class="ds-head">
-        <h2>圖上的線 <span class="ds-count num-val" id="dsCount"></span></h2>
-        <button class="link-btn" id="btnClearAll">清掉全部的線</button>
-      </div>
-      <div class="ds-list" id="dsList"></div>
-    </section>
   </main>
 
   <!-- 底部抽屜：本模式的主要動作 -->
@@ -356,7 +390,8 @@ label.switch .sub{font-size:calc(11.5px * var(--u));color:var(--c-text-2);displa
       <div class="mobile-tabs">
         <!-- 文字與圖示由 syncUI() 隨模式改寫：實驗模式時這顆打開的是數據輸入表格，不是設定 -->
         <button class="chip" id="tabSettings" aria-pressed="false"><i class="fa-solid fa-gear" id="tabSettingsIcon"></i><span id="tabSettingsText">設定</span></button>
-        <button class="chip" id="tabData" aria-pressed="false"><i class="fa-solid fa-chart-simple"></i>數據</button>
+        <!-- 圖表已留在主畫面（不摺進抽屜），這顆打開的只有線清單，圖示與文字都不能再指向圖表 -->
+        <button class="chip" id="tabData" aria-pressed="false"><i class="fa-solid fa-list-ul"></i>圖上的線</button>
       </div>
     </div>
   </div>
@@ -867,11 +902,12 @@ function drawAll(){ drawApBg(); drawApFg(); drawChart(); }
 /* ═══ 5. 互動：控制元件 ═══ */
 const el = {};
 for (const id of ['selLiquid','selCyl','boxRho','boxCyl','rhoSlider','cylSlider','rhoVal','cylVal',
-                  'chkTare','tareHint','chkFit','chkEq','labEq','eqHint','panelSim','panelExp','apStage',
+                  'chkTare','tareHint','chkFit','chkEq','labEq','eqHint','panelExp','apStage',
                   'simBtns','expBtns','btnAdd','btnEmpty','stepText','dsCount','dsList',
                   'expName','chkIncl','expTable','btnAddRow','btnExpAdd','expAddText','btnExpClear','expNote','tip',
                   'tabSettingsText','tabSettingsIcon',
-                  'btnClearAll','chart','chStage','apBg','apFg','status','btnReset'])
+                  'btnClearAll','chart','chStage','apBg','apFg','status','btnReset',
+                  'mainGrid','leftTitle'])
   el[id] = document.getElementById(id);
 
 // 下拉選項由資料表生成，避免選項與 LIQUIDS/CYLS 不同步
@@ -1074,6 +1110,11 @@ el.chart.addEventListener('pointerdown', e => {
 el.dsList.addEventListener('click', e => {
   const btn = e.target.closest('.ds-btn'); if (!btn) return;
   const id = +btn.dataset.id;
+  if (btn.dataset.act === 'edit'){
+    const d = state.datasets.find(x => x.id === id);
+    if (d) loadDatasetToTable(d);
+    return;
+  }
   if (btn.dataset.act === 'del'){
     const gone = state.datasets.find(d => d.id === id);
     state.datasets = state.datasets.filter(d => d.id !== id);
@@ -1131,6 +1172,31 @@ el.btnExpAdd.addEventListener('click', () => {
   flashStatus(msg);
 });
 
+/* 把圖上的一條線載回表格重新編輯。名稱的後綴要先剝掉再放回輸入框——
+   直接把 name 塞回去，按一次「更新圖上的線」就會多疊一層「（含量筒）」 */
+function loadDatasetToTable(d){
+  const INCL = '（含量筒）', EXCL = '（已扣掉量筒）';
+  let nm = d.name;
+  if (nm.endsWith(INCL)){ nm = nm.slice(0, -INCL.length); state.expIncl = true; }
+  else if (nm.endsWith(EXCL)){ nm = nm.slice(0, -EXCL.length); state.expIncl = false; }
+  // 加入時空白名稱會被補成「實驗組」，載回來要還原成空白，否則學生看到的是自己沒打過的字
+  state.expName = (nm === '實驗組') ? '' : nm;
+  state.expRows = d.points.map(p => ({ v:String(p.v), m:String(p.m) }));
+  while (state.expRows.length < MIN_ROWS) state.expRows.push({ v:'', m:'' });
+  state.expSkipped = [];
+  state.expLinkId = d.id;
+  /* 在模擬模式按編輯就要跟著切過去，否則表格在畫面外、學生看不出自己按了什麼。
+     借用分頁鈕的 click 走同一條切換路徑，狀態收尾（syncUI／fitAll／drawAll）才不會漏 */
+  if (state.screen !== 1){
+    const tab = document.querySelector('.navtab[data-screen="1"]');
+    if (tab) tab.click();
+  }
+  el.expName.value = state.expName;
+  el.chkIncl.checked = state.expIncl;
+  buildExpRows(); renderDsList(); syncUI();
+  flashStatus('已經把 ' + d.label + '：' + d.name + ' 載回表格，改完按「更新圖上的線」。');
+}
+
 /* 右欄列表：只在資料組增刪或顯隱變動時重建，不隨每幀動畫重畫 */
 function renderDsList(){
   el.dsList.innerHTML = '';
@@ -1159,7 +1225,17 @@ function renderDsList(){
     del.className = 'ds-btn del'; del.dataset.id = d.id; del.dataset.act = 'del';
     del.setAttribute('aria-label', '刪除 ' + d.name);
     del.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
-    row.append(dot, nm, eye, del);
+    /* 只有實驗模式加的線給編輯鈕（使用者 2026-08-30 裁示）：模擬線的點是注水動畫跡出來的，
+       改了數字就與量筒水位、天秤讀數對不起來。模擬線的 key 是用 | 串的複合鍵，不會以 exp 開頭 */
+    if (d.key.startsWith('exp')){
+      const ed = document.createElement('button');
+      ed.className = 'ds-btn'; ed.dataset.id = d.id; ed.dataset.act = 'edit';
+      ed.setAttribute('aria-label', '修改 ' + d.name + ' 的數據');
+      ed.innerHTML = '<i class="fa-solid fa-pen"></i>';
+      row.append(dot, nm, ed, eye, del);
+    } else {
+      row.append(dot, nm, eye, del);
+    }
     el.dsList.appendChild(row);
   }
 }
@@ -1184,7 +1260,9 @@ function syncTip(){
 /* 把 state 寫回 DOM：所有條件顯示與禁用態集中在這裡，不散落在各事件裡 */
 function syncUI(){
   const isSim = state.screen === 0;
-  el.panelSim.hidden = !isSim;
+  // 左欄兩個模式都在，只收起 sim-only 那一段：實驗模式一樣要能開趨勢線與方程式
+  el.mainGrid.classList.toggle('exp', !isSim);
+  el.leftTitle.textContent = isSim ? '設定' : '顯示';
   el.panelExp.hidden = isSim;
   el.apStage.hidden = !isSim;
   el.simBtns.hidden = !isSim;
@@ -1201,8 +1279,9 @@ function syncUI(){
   el.tareHint.textContent = state.tare ? '已經扣掉量筒，只秤液體的重量' : '現在的讀數包含量筒本身的重量';
   el.stepText.textContent = String(POUR_STEP);
   // 這顆 chip 在兩個模式打開的是不同東西，名字要跟著換
-  el.tabSettingsText.textContent = isSim ? '設定' : '數據輸入';
-  el.tabSettingsIcon.className = 'fa-solid ' + (isSim ? 'fa-gear' : 'fa-table-list');
+  // 實驗模式的輸入表格已經在中欄主畫面，這顆 chip 打開的只剩顯示開關，文字不能再寫「數據輸入」
+  el.tabSettingsText.textContent = isSim ? '設定' : '顯示';
+  el.tabSettingsIcon.className = 'fa-solid ' + (isSim ? 'fa-gear' : 'fa-eye');
 
   // 沒有直線就沒有方程式：勾選項鎖住，並直接說出要先做什麼，不是只讓它變灰
   el.chkEq.disabled = !state.showFit;
@@ -1423,11 +1502,9 @@ document.getElementById('nav').addEventListener('click', e => {
   state.screen = n;
   state.tip = null; syncTip();
   for (const t of document.querySelectorAll('.navtab')) t.setAttribute('aria-selected', t === tab);
+  /* 不再自動展開左欄：實驗模式的輸入表格已經在中欄主畫面，<900px 也看得到，
+     浮出面板裡只剩顯示開關，替學生打開它反而擋住表格 */
   document.body.classList.remove('show-settings', 'show-data');
-  /* <900px 左欄摺成浮出面板。模擬模式沒差（主要動作「加 10 mL」在底部抽屜），
-     但實驗模式的全部內容都在那個面板裡——不自動展開的話，學生點進「實驗模式」
-     會看到一張空圖表和無事可做的畫面，還得先猜到那顆叫「數據輸入」的 chip */
-  if (state.screen === 1 && window.innerWidth < 900) document.body.classList.add('show-settings');
   syncSheetTabs();
   syncUI();
   renderDsList();
