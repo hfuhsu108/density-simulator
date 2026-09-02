@@ -29,11 +29,15 @@
   --c-bd-soft:#EEF0F3;
   --c-text:#1C2433;
   --c-text-2:#445062;
-  --c-text-3:#7A8496;
-  --c-ok:#2F9E63;
+  /* 輔助文字：原 #7A8496 為 3.77:1，未達文字門檻 4.5。加深至 4.95:1 */
+  --c-text-3:#67717F;
+  /* 成功綠：原 #2F9E63 為 3.39:1，當介面文字未達 4.5。加深至 5.36:1。
+     畫布上的「圖形」沿用原值即可（圖形門檻 3:1），只有文字要用這個值 */
+  --c-ok:#24794C;
   /* 警示紅：原 #D64545 為 4.38:1，未達文字門檻 4.5。加深至 5.46:1 */
   --c-warn:#C62F2F;
   --c-disabled:#B9C0CF;
+  --c-slider-bg:#D3D9E1;
 }
 
 /* ═══ 2. base：字體、上下標、觸控（DEV_SPEC 第 3、4、5 節） ═══ */
@@ -93,7 +97,7 @@ main.exp .sim-only{display:none}
 .midcol{display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0;overflow-y:auto}
 /* 輸入區佔滿中欄（與器材舞台互斥）。min-height:0 讓列數多時在自己內部捲，不把中欄撐高 */
 #panelExp{flex:1;min-height:0}
-.stage{position:relative;flex:1 1 44%;min-height:130px;border-radius:10px;border:1px solid #C4D3E8;overflow:hidden;background:#FDFAF3}
+.stage{position:relative;flex:1 1 44%;min-height:130px;border-radius:10px;border:1px solid var(--c-bd);overflow:hidden;background:#FDFAF3}
 .stage canvas{position:absolute;inset:0;width:100%;height:100%}
 /* 右欄容器（來源：_shared/design/layout.html:62-64）。min-height:0 不可省——
    少了它 flex 會依內容高度而非容器高度分配，右欄撐出 main 後最下面那張卡被抽屜蓋住，
@@ -146,13 +150,31 @@ main.exp .sim-only{display:none}
 .drawer .hint{font-size:calc(12.5px * var(--u));color:var(--c-text-2)}
 .mobile-tabs{display:none;gap:8px;flex:none;margin-left:auto}
 
-.bottomnav{height:56px;flex:none;display:flex;align-items:center;padding:0 18px;background:var(--c-nav);gap:6px}
+.bottomnav{height:56px;flex:none;display:flex;align-items:center;padding:0 18px;background:var(--c-nav);gap:10px}
 .navtab{white-space:nowrap;flex:none;height:38px;padding:0 18px;border-radius:8px;color:var(--c-nav-idle);font-size:calc(13.5px * var(--u));display:flex;align-items:center}
 .navtab[aria-selected="true"]{background:var(--c-primary);color:#fff;font-weight:700}
 
 /* ═══ 4. 元件（../_shared/design/components-spec.html） ═══ */
 .field{display:flex;flex-direction:column;gap:6px}
 .field .name{font-size:calc(13px * var(--u));font-weight:700;color:var(--c-text-2)}
+/* 下拉選單（DESIGN_SPEC 第 4 節）：禁用原生 <select>，它展開的清單由 OS 繪製，
+   列高、選中底色、圓角、陰影一律套不上。結構固定：
+   .dd > .dd-btn(.v + i) ＋ .dd-list > button[role="option"]。
+   這裡的 .dd 是縱向 .field 的子元素，用 width:100%；template 的 flex:1 是給橫向 .ddrow 用的 */
+.dd{position:relative;width:100%;min-width:0}
+.dd-btn{width:100%;height:44px;border-radius:10px;border:1px solid var(--c-bd-ctl);background:var(--c-surface);
+  color:var(--c-text);font-size:calc(13px * var(--u));font-weight:700;display:flex;align-items:center;gap:6px;padding:0 10px}
+.dd-btn .v{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+.dd-btn i{flex:none;font-size:calc(11px * var(--u));color:var(--c-text-3);transition:transform .15s}
+.dd-btn:disabled{background:var(--c-bg);border-color:var(--c-bd);color:var(--c-text-3);cursor:default}
+.dd.open .dd-btn{border-color:var(--c-primary);box-shadow:0 0 0 3px rgba(42,111,219,.15)}
+.dd.open .dd-btn i{transform:rotate(180deg)}
+.dd-list{display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;padding:4px;
+  background:var(--c-surface);border:1px solid var(--c-bd-ctl);border-radius:10px;box-shadow:0 6px 18px rgba(28,36,51,.14)}
+.dd.open .dd-list{display:block}
+.dd-list button{width:100%;height:44px;border-radius:8px;padding:0 10px;display:flex;align-items:center;
+  font-size:calc(13px * var(--u));color:var(--c-text-2)}
+.dd-list button[aria-selected="true"]{background:var(--c-primary-soft);color:var(--c-primary);font-weight:700}
 
 /* 輸入類一律 ≥16px，否則 iOS Safari 聚焦會放大整頁 */
 .inp{height:44px;border-radius:10px;border:1px solid var(--c-bd-ctl);background:var(--c-surface);padding:0 10px;font-size:calc(16px * var(--u));color:var(--c-text);width:100%}
@@ -170,7 +192,7 @@ main.exp .sim-only{display:none}
 .btn-dash:disabled{cursor:default;color:var(--c-disabled);border-color:var(--c-bd)}
 .link-btn{font-size:calc(12px * var(--u));color:var(--c-text-2);height:32px;padding:0 6px;white-space:nowrap;flex:none}
 
-.chip{white-space:nowrap;height:40px;padding:0 14px;border-radius:8px;background:var(--c-surface);border:1px solid var(--c-bd-ctl);color:var(--c-text-2);font-size:calc(13px * var(--u));display:flex;align-items:center;gap:6px}
+.chip{white-space:nowrap;height:40px;padding:0 14px;border-radius:20px;background:var(--c-surface);border:1px solid var(--c-bd-ctl);color:var(--c-text-2);font-size:calc(13px * var(--u));display:flex;align-items:center;gap:6px}
 .chip[aria-pressed="true"]{background:var(--c-primary);border-color:var(--c-primary);color:#fff;font-weight:700}
 
 /* DESIGN_SPEC 給的視覺尺寸（icon 鈕 34px、分頁 38px）小於鐵律 6 的 44px：
@@ -187,11 +209,11 @@ main.exp .sim-only{display:none}
 .sliderbox .minmax{display:flex;justify-content:space-between;font-size:calc(11.5px * var(--u));color:var(--c-text-2)}
 /* 滑桿：軌 6px、把手 22px、感應高度 44px（透明區） */
 input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:44px;margin:0;background:transparent}
-input[type="range"]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:linear-gradient(to right,var(--c-primary) var(--fill,50%),#D3D9E1 var(--fill,50%))}
-input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--c-primary);margin-top:-8px;box-shadow:0 1px 3px rgba(0,0,0,.2)}
-input[type="range"]::-moz-range-track{height:6px;border-radius:3px;background:#D3D9E1}
-input[type="range"]::-moz-range-progress{height:6px;border-radius:3px;background:var(--c-primary)}
-input[type="range"]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--c-primary);box-shadow:0 1px 3px rgba(0,0,0,.2)}
+input[type="range"]::-webkit-slider-runnable-track{height:7px;border-radius:4px;background:linear-gradient(to right,var(--c-primary) var(--fill,50%),var(--c-slider-bg) var(--fill,50%))}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#fff;border:2px solid var(--c-primary);margin-top:-8.5px;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+input[type="range"]::-moz-range-track{height:7px;border-radius:4px;background:var(--c-slider-bg)}
+input[type="range"]::-moz-range-progress{height:7px;border-radius:4px;background:var(--c-primary)}
+input[type="range"]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#fff;border:2px solid var(--c-primary);box-shadow:0 1px 3px rgba(0,0,0,.2)}
 
 label.check{display:flex;align-items:center;gap:8px;font-size:calc(13px * var(--u));color:var(--c-text-2);min-height:44px;line-height:1.3}
 label.check input{position:absolute;opacity:0;width:0;height:0}
@@ -288,7 +310,13 @@ label.switch .sub{font-size:calc(11.5px * var(--u));color:var(--c-text-2);displa
            兩個模式都在——實驗模式同樣要能開趨勢線，那正是真實數據求密度的入口 -->
       <div class="field sim-only">
         <span class="name">液體種類</span>
-        <select class="inp" id="selLiquid" aria-label="液體種類"></select>
+        <!-- 選項由 buildOptions() 依 LIQUIDS 生成，這裡只留殼 -->
+        <div class="dd" id="ddLiquid">
+          <button class="dd-btn" aria-expanded="false" aria-label="液體種類">
+            <span class="v"></span><i class="fa-solid fa-chevron-down"></i>
+          </button>
+          <div class="dd-list" role="listbox"></div>
+        </div>
       </div>
 
       <div class="sliderbox sim-only" id="boxRho" hidden>
@@ -299,7 +327,12 @@ label.switch .sub{font-size:calc(11.5px * var(--u));color:var(--c-text-2);displa
 
       <div class="field sim-only">
         <span class="name">量筒</span>
-        <select class="inp" id="selCyl" aria-label="量筒"></select>
+        <div class="dd" id="ddCyl">
+          <button class="dd-btn" aria-expanded="false" aria-label="量筒">
+            <span class="v"></span><i class="fa-solid fa-chevron-down"></i>
+          </button>
+          <div class="dd-list" role="listbox"></div>
+        </div>
       </div>
 
       <div class="sliderbox sim-only" id="boxCyl" hidden>
@@ -437,8 +470,9 @@ const CYLS = [
   { id:'custom', name:'自訂量筒', m:null }
 ];
 // 圖表序列色（DESIGN_SPEC 第 3 節：藍→綠→橘→紫→青），數量即為資料組上限。
-// 橘原為 #E8871E，白底實測 2.65:1 未達 3:1 門檻，加深為 #C2660C（4.04:1）
-const SERIES = ['#2A6FDB', '#2F9E63', '#C2660C', '#8B5CF6', '#0F8A8A'];
+// 橘原為 #E8871E，白底實測 2.65:1 未達 3:1 門檻。三個模擬各自加深成不同的值，
+// 統一取 #D2700F（白卡 3.46、頁面底 3.23，兩種底色都過關）
+const SERIES = ['#2A6FDB', '#2F9E63', '#D2700F', '#8B5CF6', '#0F8A8A'];
 // 顏色不得是唯一的區辨方式（DESIGN_SPEC 第 3 節）：投影會把序列色洗掉，
 // 每組另給一個代號，圖上的線與右欄清單標同一個字
 const LABELS = ['A', 'B', 'C', 'D', 'E'];
@@ -452,7 +486,8 @@ const C = {
   glass:'rgba(197,221,232,.55)', beaker:'rgba(197,221,232,.5)', surface:'rgba(42,111,219,.45)',
   // 刻度數字 #7A8496 實測 3.77:1（未達文字門檻 4.5）、軸線 #CFD5DD 只有 1.48:1、
   // 空狀態提示 #9AA3B2 只有 2.54:1 —— 三者都承載資訊，一律加深（DESIGN_SPEC 第 2 節）
-  lcd:'#1C2433', ok:'#2F9E63', grid:'#EEF1F5', axis:'#7A8496', tick:'#445062', axisLabel:'#445062', empty:'#445062',
+  // ok 只用在畫布文字（drawApFg 的提示），走文字門檻 4.5；格線另訂 1.4:1 下限，#EEF1F5 的 1.19 不合格
+  lcd:'#1C2433', ok:'#24794C', grid:'#D5DAE1', axis:'#7A8496', tick:'#445062', axisLabel:'#445062', empty:'#445062',
   out:'#C62F2F'   // 出界標記（與 --c-warn 同步加深到 5.46:1）
 };
 // 座標軸固定範圍（DESIGN_SPEC 第 7 節：軸一律固定，不隨資料縮放）。
@@ -901,7 +936,7 @@ function drawAll(){ drawApBg(); drawApFg(); drawChart(); }
 
 /* ═══ 5. 互動：控制元件 ═══ */
 const el = {};
-for (const id of ['selLiquid','selCyl','boxRho','boxCyl','rhoSlider','cylSlider','rhoVal','cylVal',
+for (const id of ['ddLiquid','ddCyl','boxRho','boxCyl','rhoSlider','cylSlider','rhoVal','cylVal',
                   'chkTare','tareHint','chkFit','chkEq','labEq','eqHint','panelExp','apStage',
                   'simBtns','expBtns','btnAdd','btnEmpty','stepText','dsCount','dsList',
                   'expName','chkIncl','expTable','btnAddRow','btnExpAdd','expAddText','btnExpClear','expNote','tip',
@@ -910,23 +945,41 @@ for (const id of ['selLiquid','selCyl','boxRho','boxCyl','rhoSlider','cylSlider'
                   'mainGrid','leftTitle'])
   el[id] = document.getElementById(id);
 
-// 下拉選項由資料表生成，避免選項與 LIQUIDS/CYLS 不同步
+// 下拉選項由資料表生成，避免選項與 LIQUIDS/CYLS 不同步。
+// 用 createElement 而不是拼 innerHTML：選項文字含全形空白與「？」，走 textContent 就不必操心跳脫
+function ddBuild(dd, items){
+  const list = dd.querySelector('.dd-list');
+  list.innerHTML = '';
+  for (const it of items){
+    const b = document.createElement('button');
+    b.setAttribute('role', 'option');
+    b.setAttribute('aria-selected', 'false');
+    b.dataset.v = it.v;
+    b.textContent = it.label;
+    list.appendChild(b);
+  }
+}
 function buildOptions(){
-  el.selLiquid.innerHTML = '';
-  for (const l of LIQUIDS){
-    const o = document.createElement('option');
-    o.value = l.id;
-    o.textContent = l.rho === null ? '自訂液體（滑桿調 D）'
-                  : l.name + '　D = ' + (l.unknown ? '？' : l.rho.toFixed(DEC.rho));
-    el.selLiquid.appendChild(o);
+  ddBuild(el.ddLiquid, LIQUIDS.map(l => ({
+    v: l.id,
+    label: l.rho === null ? '自訂液體（滑桿調 D）'
+         : l.name + '　D = ' + (l.unknown ? '？' : l.rho.toFixed(DEC.rho))
+  })));
+  ddBuild(el.ddCyl, CYLS.map(c => ({
+    v: c.id,
+    label: c.m === null ? '自訂量筒（滑桿調質量）' : c.name + '　質量 ' + c.m + ' g'
+  })));
+}
+// 對應原本的 select.value = ...：只改選中態與按鈕上的文字，不重建清單。
+// syncUI() 連動畫落地時都會呼叫，重建 DOM 太貴
+function ddSync(dd, value){
+  let label = '—';
+  for (const o of dd.querySelectorAll('button[role="option"]')){
+    const on = o.dataset.v === String(value);
+    o.setAttribute('aria-selected', String(on));
+    if (on) label = o.textContent;
   }
-  el.selCyl.innerHTML = '';
-  for (const c of CYLS){
-    const o = document.createElement('option');
-    o.value = c.id;
-    o.textContent = c.m === null ? '自訂量筒（滑桿調質量）' : c.name + '　質量 ' + c.m + ' g';
-    el.selCyl.appendChild(o);
-  }
+  dd.querySelector('.dd-btn .v').textContent = label;
 }
 
 function refreshFill(input){
@@ -974,8 +1027,41 @@ function dropCurrentRun(){
   state.curKey = null;
   if (state.targetV > 0.001){ state.targetV = 0; startLoop(); }
 }
-el.selLiquid.addEventListener('change', e => { state.liquidId = e.target.value; emptyCyl('換了液體'); });
-el.selCyl.addEventListener('change', e => { state.cylId = e.target.value; emptyCyl('換了量筒'); });
+/* 下拉的開合與選取。closeAllDd() 與下面兩個 document 監聽器逐字搬自
+   motion-graphs-sim/index.html:2806-2822，不要自行改寫——用 capture、
+   以及「點在下拉自己身上時不關」這兩點都是踩過才寫成這樣的。 */
+function closeAllDd(){
+  for (const d of document.querySelectorAll('.dd.open')){
+    d.classList.remove('open');
+    const b = d.querySelector('.dd-btn');
+    if (b) b.setAttribute('aria-expanded', 'false');
+  }
+}
+document.addEventListener('pointerdown', e => {
+  if (!e.target.closest('.dd')) closeAllDd();
+}, true);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeAllDd();
+});
+// 清單由 buildOptions() 生成，所以綁在不會被重建的 .dd 容器上（同 motion 的事件委派做法）
+for (const dd of [el.ddLiquid, el.ddCyl]){
+  dd.addEventListener('click', e => {
+    const btn = e.target.closest('.dd-btn');
+    if (btn){
+      if (btn.disabled) return;
+      const wasOpen = dd.classList.contains('open');
+      closeAllDd();
+      if (!wasOpen){ dd.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); }
+      return;
+    }
+    const opt = e.target.closest('.dd-list button');
+    if (!opt) return;
+    closeAllDd();
+    dd.dispatchEvent(new CustomEvent('dd:change', { detail:{ value:opt.dataset.v } }));
+  });
+}
+el.ddLiquid.addEventListener('dd:change', e => { state.liquidId = e.detail.value; emptyCyl('換了液體'); });
+el.ddCyl.addEventListener('dd:change', e => { state.cylId = e.detail.value; emptyCyl('換了量筒'); });
 el.rhoSlider.addEventListener('input', e => {
   state.customRho = +(+e.target.value).toFixed(DEC.rho); refreshFill(e.target); emptyCyl('改了密度');
 });
@@ -1268,8 +1354,8 @@ function syncUI(){
   el.simBtns.hidden = !isSim;
   el.expBtns.hidden = isSim;
 
-  el.selLiquid.value = state.liquidId;
-  el.selCyl.value = state.cylId;
+  ddSync(el.ddLiquid, state.liquidId);
+  ddSync(el.ddCyl, state.cylId);
   el.boxRho.hidden = state.liquidId !== 'custom';
   el.boxCyl.hidden = state.cylId !== 'custom';
   el.rhoVal.textContent = state.customRho.toFixed(DEC.rho);
