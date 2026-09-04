@@ -71,7 +71,8 @@ button:not(:disabled):active,.chip:active,label.check:active,label.switch:active
   transform:scale(.96);filter:brightness(.94)
 }
 
-/* ═══ 3. 版面：Header / 三欄 / 抽屜 / 導覽列（../_shared/design/layout.html） ═══ */
+/* ═══ 3. 版面：Header / 三欄＋動作卡 / 導覽列（../_shared/design/layout.html）
+   本模擬不設底部抽屜：抽屜是播放控制的容器，而這裡沒有動畫可播 ═══ */
 .app{
   height:100vh;   /* fallback */
   height:100dvh;  /* iPad Safari 工具列收合時的正確高度 */
@@ -84,7 +85,13 @@ button:not(:disabled):active,.chip:active,label.check:active,label.switch:active
 .topbar .actions{margin-left:auto;display:flex;gap:12px}
 .icon-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--c-bd-ctl);background:var(--c-surface);display:flex;align-items:center;justify-content:center;color:var(--c-text-2);font-size:14px}
 
-main{flex:1;position:relative;display:grid;grid-template-columns:1fr 1.5fr 1.5fr;gap:12px;padding:12px 14px 0;min-height:0}
+/* 底部抽屜取消（本模擬沒有播放控制），動作鈕掛在左欄下方，所以 main 多一列：
+   上列給三欄、下列給動作卡，中右兩欄跨兩列。padding 下緣由 0 改 12px——
+   原本那個 0 是留給抽屜自己的 margin，抽屜沒了就得由 main 補回底部留白 */
+main{flex:1;position:relative;display:grid;grid-template-columns:1fr 1.5fr 1.5fr;grid-template-rows:1fr auto;gap:12px;padding:12px 14px;min-height:0}
+#panelLeft{grid-column:1;grid-row:1}
+.midcol{grid-column:2;grid-row:1/3}
+.rightcol{grid-column:3;grid-row:1/3}
 /* 實驗模式：左欄只留「顯示」那一段，模擬設定收起。三欄比例不變——
    輸入區佔中欄、圖表留右欄，圖表寬度兩個模式一致，斜率才不會因模式而異 */
 main.exp .sim-only{display:none}
@@ -100,7 +107,7 @@ main.exp .sim-only{display:none}
 .stage{position:relative;flex:1 1 44%;min-height:130px;border-radius:10px;border:1px solid var(--c-bd);overflow:hidden;background:#FDFAF3}
 .stage canvas{position:absolute;inset:0;width:100%;height:100%}
 /* 右欄容器（來源：_shared/design/layout.html:62-64）。min-height:0 不可省——
-   少了它 flex 會依內容高度而非容器高度分配，右欄撐出 main 後最下面那張卡被抽屜蓋住，
+   少了它 flex 會依內容高度而非容器高度分配，右欄撐出 main 後最下面那張卡被底部導覽列蓋住，
    而且不會出現捲軸、沒有任何錯誤，只能靠量測發現 */
 .rightcol{display:flex;flex-direction:column;gap:10px;min-width:0;min-height:0}
 /* 座標圖光是四邊 padding 就吃掉約 96px，低於 160px 畫出來不具可讀性。
@@ -144,10 +151,19 @@ main.exp .sim-only{display:none}
 .ds-btn.del{margin-left:14px}
 .ds-empty{font-size:calc(12.5px * var(--u));color:var(--c-text-2);padding:8px 2px;line-height:1.5}
 
-.drawer{flex:none;margin:12px 14px;background:var(--c-surface);border:1px solid var(--c-bd);border-radius:12px;padding:8px 18px 10px;box-shadow:0 -4px 12px rgba(28,36,51,.05)}
-.drawer .row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.btns{display:flex;gap:8px;flex:none}
-.drawer .hint{font-size:calc(12.5px * var(--u));color:var(--c-text-2)}
+/* 動作卡：抽屜取消後動作鈕的新家，緊貼左欄下方、與左欄同寬。
+   DOM 上它是 main 的 grid item 而不是 #panelLeft 的子元素——<900px 時左欄整個
+   display:none，放進左欄裡會跟著消失，而 CSS 沒有辦法把已被隱藏的父層底下的東西撈出來顯示。
+   沒有 box-shadow：陰影是抽屜／滑桿把手／.seg 選中格三個例外專用（DESIGN_SPEC 第 6 節），
+   這張卡不是抽屜，只能用 1px 邊框分層 */
+.actbar{background:var(--c-surface);border:1px solid var(--c-bd);border-radius:10px;padding:12px;
+  display:flex;flex-direction:column;gap:8px;min-width:0}
+/* 左欄只有約四分之一寬（1366 視窗下約 328px），兩顆鈕並排會被 white-space:nowrap 撐出去，
+   桌面版一律整欄寬縱向堆疊；<900px 橫排時再由媒體查詢改回來 */
+.btns{display:flex;flex-direction:column;gap:8px}
+.actbar .btn{width:100%;justify-content:center}
+/* .status 原本的 flex:1 是給抽屜那排橫向 flex 用的，在縱向容器裡會把它撐成整塊空白 */
+.actbar .status{flex:none;min-width:0}
 .mobile-tabs{display:none;gap:8px;flex:none;margin-left:auto}
 
 .bottomnav{height:56px;flex:none;display:flex;align-items:center;padding:0 18px;background:var(--c-nav);gap:10px}
@@ -268,21 +284,37 @@ label.switch .sub{font-size:calc(11.5px * var(--u));color:var(--c-text-2);displa
 
 /* ═══ 5. 響應式：<900px（涵蓋所有 iPad 直向 768/820/834）左右欄摺入底部分頁 ═══ */
 @media (max-width:899px){
-  /* 圖表不摺進抽屜（DESIGN_SPEC §1 例外條款：圖表是教學主體，收進抽屜等於消失），
+  /* 圖表不摺進面板（DESIGN_SPEC §1 例外條款：圖表是教學主體，收起來等於消失），
      改回「器材在上 44% / 座標圖在下 56%」。做法是讓 .rightcol 用 display:contents 讓出盒模型，
      .chartbox 與 .datacol 直接成為 main 的 grid item，位置全部由 CSS 的列定位決定。
      刻意不用 JS 搬 DOM：matchMedia 的 change 與 ResizeObserver 都不是每種尺寸變動都會派送
      （實測 viewport 1366→820→1366 兩者皆未觸發），靠事件搬會漏搬，旋轉平板就破版 */
-  main{grid-template-columns:1fr;grid-template-rows:44fr 56fr}
+  main{grid-template-columns:1fr;grid-template-rows:44fr 56fr auto}
   .rightcol{display:contents}
-  .midcol{grid-row:1}
-  .chartbox{grid-row:2;min-height:0}
+  .midcol{grid-column:1;grid-row:1}
+  .chartbox{grid-column:1;grid-row:2;min-height:0}
+  /* 動作列不跟著左欄摺（2026-09-04 定案）：它是主要操作路徑，收進面板會讓「加 10 mL」
+     從一步變成「開面板→加水→關面板才看得見量筒」三步。改成橫排貼在座標圖下方，
+     位置雖與原抽屜相同但沒有卡片陰影，語意是主畫面的一列而不是抽屜 */
+  .actbar{grid-column:1;grid-row:3;flex-direction:row;align-items:center;flex-wrap:wrap;gap:12px}
+  .actbar .btns{flex-direction:row}
+  .actbar .btn{width:auto;justify-content:flex-start}
+  .actbar .status{flex:1;min-width:140px}
   /* 只摺左欄。選擇器必須是 main > .panel：實驗模式的輸入區也是 .panel，
      但它在中欄、屬於主畫面，寫成 .panel 會把它一起藏掉，實驗模式中欄就全空了 */
   main > .panel,.datacol{display:none}
   .mobile-tabs{display:flex}
-  body.show-settings main > .panel{display:flex;position:absolute;left:14px;right:14px;bottom:0;max-height:64%;z-index:5;box-shadow:0 8px 28px rgba(28,36,51,.25)}
-  body.show-data .datacol{display:flex;position:absolute;left:14px;right:14px;bottom:0;max-height:64%;z-index:5;box-shadow:0 8px 28px rgba(28,36,51,.22)}
+  /* 浮出面板改用 grid 定位疊在座標圖那一格（grid 允許同格重疊，靠 z-index 分層），
+     不再用 position:absolute + bottom:0。抽屜在的時候 main 底部就是抽屜上緣，貼底剛好；
+     動作列進了 main 之後貼底會蓋住它 82px，連「設定」鈕自己都被蓋掉打不開也關不掉
+     （2026-09-04 實測 elementFromPoint 在鈕中心命中的是面板裡的 labEq）。
+     align-self:end 讓它從動作列上緣往上長，視覺上仍是由下方浮出。
+     左欄這條必須寫成 #panelLeft 而不是 main > .panel：桌面版的 #panelLeft{grid-row:1}
+     是 ID 選擇器，特異性壓過 main > .panel，面板會貼到器材那一格的底部去 */
+  body.show-settings #panelLeft,body.show-data .datacol{
+    display:flex;grid-column:1;grid-row:2;align-self:end;max-height:100%;min-height:0;z-index:5}
+  body.show-settings #panelLeft{box-shadow:0 8px 28px rgba(28,36,51,.25)}
+  body.show-data .datacol{box-shadow:0 8px 28px rgba(28,36,51,.22)}
 }
 </style>
 </head>
@@ -359,6 +391,29 @@ label.switch .sub{font-size:calc(11.5px * var(--u));color:var(--c-text-2);displa
       </label>
     </section>
 
+    <!-- 動作卡：本模擬沒有動畫播放控制，底部抽屜取消（2026-09-04），原本抽屜裡的
+         動作鈕改掛左欄下方。放在 main 底下而不是 #panelLeft 裡面的理由見 CSS .actbar 的註解 -->
+    <div class="actbar">
+      <div class="btns" id="simBtns">
+        <button class="btn primary" id="btnAdd"><i class="fa-solid fa-droplet"></i>加 <span class="num-val" id="stepText">10</span> mL</button>
+        <button class="btn" id="btnEmpty"><i class="fa-solid fa-droplet-slash"></i>倒空量筒</button>
+      </div>
+      <div class="btns" id="expBtns" hidden>
+        <button class="btn primary" id="btnExpAdd"><i class="fa-solid fa-chart-line"></i><span id="expAddText">加入圖表</span></button>
+        <button class="btn" id="btnExpClear">清空表格，換下一組</button>
+      </div>
+      <button class="btn" id="btnReset"><i class="fa-solid fa-rotate-left"></i>全部重置</button>
+      <span class="status" id="status" hidden></span>
+      <!-- 只在 <900px 出現：叫出摺起來的左欄與「圖上的線」。它是左欄的開關，
+           所以不能跟動作鈕一起放進左欄，否則開關被關在它要開的東西裡面 -->
+      <div class="mobile-tabs">
+        <!-- 文字與圖示由 syncUI() 隨模式改寫：實驗模式時這顆打開的是數據輸入表格，不是設定 -->
+        <button class="chip" id="tabSettings" aria-pressed="false"><i class="fa-solid fa-gear" id="tabSettingsIcon"></i><span id="tabSettingsText">設定</span></button>
+        <!-- 圖表已留在主畫面（不摺進面板），這顆打開的只有線清單，圖示與文字都不能再指向圖表 -->
+        <button class="chip" id="tabData" aria-pressed="false"><i class="fa-solid fa-list-ul"></i>圖上的線</button>
+      </div>
+    </div>
+
     <!-- 中欄：器材舞台（模擬模式）與實驗數據輸入（實驗模式）互斥，各佔滿中欄。
          輸入區放中欄而不放左欄，圖表才留得住右欄的 493px——與模擬模式同寬，
          同一條線的斜率在兩個模式下才一致（改動前實驗模式是兩欄，圖表被拉成 995 寬、線變平）。
@@ -406,28 +461,6 @@ label.switch .sub{font-size:calc(11.5px * var(--u));color:var(--c-text-2);displa
       </section>
     </div>
   </main>
-
-  <!-- 底部抽屜：本模式的主要動作 -->
-  <div class="drawer">
-    <div class="row">
-      <div class="btns" id="simBtns">
-        <button class="btn primary" id="btnAdd"><i class="fa-solid fa-droplet"></i>加 <span class="num-val" id="stepText">10</span> mL</button>
-        <button class="btn" id="btnEmpty"><i class="fa-solid fa-droplet-slash"></i>倒空量筒</button>
-      </div>
-      <div class="btns" id="expBtns" hidden>
-        <button class="btn primary" id="btnExpAdd"><i class="fa-solid fa-chart-line"></i><span id="expAddText">加入圖表</span></button>
-        <button class="btn" id="btnExpClear">清空表格，換下一組</button>
-      </div>
-      <button class="btn" id="btnReset"><i class="fa-solid fa-rotate-left"></i>全部重置</button>
-      <span class="status" id="status" hidden></span>
-      <div class="mobile-tabs">
-        <!-- 文字與圖示由 syncUI() 隨模式改寫：實驗模式時這顆打開的是數據輸入表格，不是設定 -->
-        <button class="chip" id="tabSettings" aria-pressed="false"><i class="fa-solid fa-gear" id="tabSettingsIcon"></i><span id="tabSettingsText">設定</span></button>
-        <!-- 圖表已留在主畫面（不摺進抽屜），這顆打開的只有線清單，圖示與文字都不能再指向圖表 -->
-        <button class="chip" id="tabData" aria-pressed="false"><i class="fa-solid fa-list-ul"></i>圖上的線</button>
-      </div>
-    </div>
-  </div>
 
   <!-- 底部導覽列：單元內分頁（PhET screens） -->
   <nav class="bottomnav" id="nav">
